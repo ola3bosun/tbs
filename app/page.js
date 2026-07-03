@@ -48,6 +48,12 @@ export default function Portfolio() {
       year: "2026",
       link: "#",
     },
+    {
+      name: "Olaoluwa Diyaolu",
+      role: "Frontend Engineering",
+      year: "In Progress",
+      link: "#",
+    }
   ];
 
   return (
