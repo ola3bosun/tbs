@@ -23,3 +23,22 @@
 .page-entry-active {
   animation: pageReveal 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+
+/* Music metadata flip states */
+.song-flip-exit {
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease-out;
+}
+
+.song-flip-enter {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.song-flip-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease-out;
+}

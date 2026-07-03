@@ -1,7 +1,7 @@
 // app/page.js
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { getNowPlaying } from "./actions/spotify";
 import CustomCursor from "./components/CustomCursor";
 import SystemMatrix from "./components/SystemMatrix";
@@ -10,9 +10,13 @@ import CinematicLoader from "./components/CinematicLoader";
 
 export default function Portfolio() {
   const [track, setTrack] = useState({ isPlaying: false });
+  const [displayTrack, setDisplayTrack] = useState({ isPlaying: false });
+  const [songAnimState, setSongAnimState] = useState("active");
   const [isHovered, setIsHovered] = useState(false);
   const [activeHover, setActiveHover] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  const initialMount = useRef(true);
 
   useEffect(() => {
     async function updateTrack() {
@@ -29,63 +33,49 @@ export default function Portfolio() {
     return () => clearInterval(interval);
   }, []);
 
-  const projects = [
-    // {
-    //   name: "Transcend Projects",
-    //   role: "Design & Development",
-    //   year: "2026",
-    //   link: "#",
-    // },
-    {
-      name: "The Nuanced Studio",
-      role: "Engineering",
-      year: "2025",
-      link: "#",
-    },
-    {
-      name: "Aproko Doctor",
-      role: "Frontend Engineering",
-      year: "2026",
-      link: "#",
-    },
-    {
-      name: "Olaoluwa Diyaolu",
-      role: "Frontend Engineering",
-      year: "In Progress",
-      link: "#",
+  useEffect(() => {
+    if (initialMount.current) {
+      setDisplayTrack(track);
+      initialMount.current = false;
+      return;
     }
+
+    if (track.title !== displayTrack.title) {
+      setSongAnimState("exit");
+      const timeout = setTimeout(() => {
+        setDisplayTrack(track);
+        setSongAnimState("enter");
+        requestAnimationFrame(() => {
+          setSongAnimState("active");
+        });
+      }, 400);
+      return () => clearTimeout(timeout);
+    } else {
+      setDisplayTrack(track);
+    }
+  }, [track, displayTrack.title]);
+
+  const projects = [
+    { name: "The Nuanced Studio", role: "Engineering", year: "2025", link: "#" },
+    { name: "Aproko Doctor", role: "Frontend Engineering", year: "2026", link: "#" },
+    { name: "Olaoluwa Diyaolu", role: "Frontend Engineering", year: "In Progress", link: "#" }
   ];
 
   return (
-    <main className="relative min-h-screen w-full bg-[rgba(0,0,0,.1)] text-[#f4efe9] p-8 md:p-16 flex flex-col justify-between overflow-hidden font-sans select-none md:cursor-none gap-12">
+    <main className="relative min-h-screen w-full bg-transparent text-[#f4efe9] p-8 md:p-16 flex flex-col justify-between overflow-hidden font-sans select-none md:cursor-none gap-12">
       
       {/* 1. THE HORIZON SPLIT LOADER */}
       <CinematicLoader onComplete={() => setIsLoading(false)} />
 
-      {/* 2. AMBIENT ENGINES */}
+      {/* 2. AMBIENT ENGINE */}
       <ParticleCanvas />
       {!isLoading && <CustomCursor isHovered={isHovered} />}
 
       {/* BACKGROUND VECTOR ORBITS */}
-      <div className="absolute inset-0 -z-10 opacity-20 pointer-events-none kinetic-reveal" style={{ animationDelay: '2000ms' }}>
+      <div className="absolute inset-0 z-0 opacity-20 pointer-events-none kinetic-reveal" style={{ animationDelay: '2000ms' }}>
         <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          <circle
-            cx="90%"
-            cy="50%"
-            r="40%"
-            fill="none"
-            stroke="#f4efe9"
-            strokeWidth="1.5"
-            strokeDasharray="6 6"
-          />
-          <circle
-            cx="90%"
-            cy="50%"
-            r="55%"
-            fill="none"
-            stroke="#f4efe9"
-            strokeWidth="1"
-          />
+          <circle cx="90%" cy="50%" r="40%" fill="none" stroke="#f4efe9" strokeWidth="1.5" strokeDasharray="6 6" />
+          <circle cx="90%" cy="50%" r="55%" fill="none" stroke="#f4efe9" strokeWidth="1" />
         </svg>
       </div>
 
@@ -127,7 +117,6 @@ export default function Portfolio() {
           </div>
         </nav>
 
-        {/* Matrix wrapped in a reveal to drop in after nav */}
         <div className="kinetic-reveal" style={{ animationDelay: '2500ms' }}>
           <SystemMatrix track={track} activeHover={activeHover} />
         </div>
@@ -138,7 +127,7 @@ export default function Portfolio() {
         <span className="text-xl font-light font-mono text-[#f4efe9]">+</span>
       </div>
 
-      {/* BOTTOM LAYER WRAPPER: Description & Massive Typography */}
+      {/* BOTTOM LAYER WRAPPER */}
       <div className="w-full space-y-8 z-10 mt-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-end max-w-4xl kinetic-reveal" style={{ animationDelay: '2700ms' }}>
           <p className="text-xs md:text-sm text-neutral-400 leading-relaxed font-light max-w-md tracking-wide">
@@ -148,45 +137,38 @@ export default function Portfolio() {
           </p>
 
           <div
-            className="border-l border-neutral-800 pl-4 py-1"
+            className="border-l border-neutral-800 pl-4 py-1 overflow-hidden min-h-[52px]"
             onMouseEnter={() => !isLoading && setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
-            {track.isPlaying ? (
-              <a
-                href={track.songUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block space-y-1 group"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-[9px] uppercase tracking-widest text-neutral-400 font-mono">
-                    Live
-                  </span>
-                  <span className="w-1 h-1 bg-[#f4efe9] animate-ping rounded-full" />
+            <div className={`space-y-1 transition-all duration-[400ms] ${
+              songAnimState === 'exit' ? 'song-flip-exit' : 
+              songAnimState === 'enter' ? 'song-flip-enter' : 'song-flip-active'
+            }`}>
+              {displayTrack.isPlaying ? (
+                <a href={displayTrack.songUrl} target="_blank" rel="noopener noreferrer" className="block group">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] uppercase tracking-widest text-neutral-400 font-mono">Live</span>
+                    <span className="w-1.5 h-1.5 bg-[#f4efe9] animate-ping " />
+                  </div>
+                  <p className="text-xs font-medium text-neutral-200 truncate group-hover:text-neutral-400 transition-colors">
+                    {displayTrack.title} <span className="text-neutral-500 font-light">— {displayTrack.artist}</span>
+                  </p>
+                  <p className="text-[9px] text-neutral-500 font-mono truncate group-hover:text-neutral-400 transition-colors">
+                    {displayTrack.album}
+                  </p>
+                </a>
+              ) : (
+                <div className="text-neutral-600 space-y-1">
+                  <span className="text-[9px] uppercase tracking-widest font-mono">{"// Playback"}</span>
+                  <p className="text-xs font-light tracking-wide">Offline</p>
                 </div>
-                <p className="text-xs font-medium text-neutral-200 truncate group-hover:text-neutral-400 transition-colors">
-                  {track.title}{" "}
-                  <span className="text-neutral-500 font-light">
-                    — {track.artist}
-                  </span>
-                </p>
-                <p className="text-[9px] text-neutral-500 font-mono truncate group-hover:text-neutral-400 transition-colors">
-                  {track.album}
-                </p>
-              </a>
-            ) : (
-              <div className="text-neutral-600 space-y-1">
-                <span className="text-[9px] uppercase tracking-widest font-mono">
-                  {"// Playback"}
-                </span>
-                <p className="text-xs font-light tracking-wide">Offline</p>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
 
-        {/* BOTTOM LAYER: Grounded and Layout-Safe Typography */}
+        {/* BOTTOM LAYER NAME MARK */}
         <div
           className="pt-4 border-t border-neutral-800/40 group/hero relative top-10 w-full kinetic-reveal"
           style={{ animationDelay: '2800ms' }}
