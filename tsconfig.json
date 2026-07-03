@@ -30,7 +30,7 @@
     "**/*.mts",
     "**/*.ts",
     "**/*.tsx"
-  ],
+, "app/page.js", "app/components/CustomCursor.js"  ],
   "exclude": [
     "node_modules"
   ]

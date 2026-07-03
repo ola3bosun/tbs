@@ -1,8 +1,8 @@
 'use server';
 
-const CLIENT_ID = REDACTED_SPOTIFY_CLIENT_ID;
-const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
-const REFRESH_TOKEN = process.env.SPOTIFY_REFRESH_TOKEN;
+const CLIENT_ID = 'REDACTED_SPOTIFY_CLIENT_ID';
+const CLIENT_SECRET = 'REDACTED_SPOTIFY_CLIENT_SECRET';
+const REFRESH_TOKEN = 'REDACTED_SPOTIFY_REFRESH_TOKEN';
 
 const TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token';
 const NOW_PLAYING_ENDPOINT = 'https://api.spotify.com/v1/me/player/currently-playing';
@@ -49,11 +49,12 @@ export async function getNowPlaying() {
     return { isPlaying: false };
   }
 
-  return {
-    isPlaying: song.is_playing,
-    title: song.item.name,
-    artist: song.item.artists.map((_artist: any) => _artist.name).join(', '),
-    albumImageUrl: song.item.album.images[0]?.url,
-    songUrl: song.item.external_urls.spotify,
-  };
+return {
+  isPlaying: song.is_playing,
+  title: song.item.name,
+  artist: song.item.artists.map((_artist) => _artist.name).join(', '),
+  album: song.item.album.name,
+  albumImageUrl: song.item.album.images[0]?.url,
+  songUrl: song.item.external_urls.spotify,
+};
 }
