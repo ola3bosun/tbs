@@ -21,7 +21,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${sansFont.variable} ${expressiveScript.variable} bg-[rgba(0, 0, 0, 0.1)]`}>
+    <html lang="en" className={`${sansFont.variable} ${expressiveScript.variable} bg-[#181c14]`}>
       <body className="antialiased">{children}</body>
     </html>
   );
