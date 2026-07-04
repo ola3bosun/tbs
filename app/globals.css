@@ -1,44 +1,73 @@
 @import "tailwindcss";
 
 @theme {
-  --font-expressive-script: var(--font-expressive-script), cursive;
-  --font-sans: var(--font-sans), sans-serif;
+    --font-expressive-script: var(--font-expressive-script), cursive;
+    --font-sans: var(--font-sans), sans-serif;
+}
+
+a,
+button {
+    -webkit-tap-highlight-color: transparent;
 }
 
 @keyframes customReveal {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @keyframes pageReveal {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .kinetic-reveal {
-  opacity: 0;
-  animation: customReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+    animation: customReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .page-entry-active {
-  animation: pageReveal 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: pageReveal 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
-
 
 /* Music metadata flip states */
 .song-flip-exit {
-  opacity: 0;
-  transform: translateY(-8px);
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease-out;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition:
+        transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+        opacity 0.3s ease-out;
 }
 
 .song-flip-enter {
-  opacity: 0;
-  transform: translateY(8px);
+    opacity: 0;
+    transform: translateY(8px);
 }
 
 .song-flip-active {
-  opacity: 1;
-  transform: translateY(0);
-  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease-out;
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+        transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+        opacity 0.4s ease-out;
+}
+
+@media (max-width: 768px) {
+    .song-flip-exit {
+        transform: translateY(-4px);
+    }
+    .song-flip-enter {
+        transform: translateY(4px);
+    }
 }

@@ -12,6 +12,8 @@ export default function ParticleCanvas() {
 
     let animationFrameId;
     let particles = [];
+    let width = window.innerWidth;
+    let height = window.innerHeight;
     const mouse = {
       x: null,
       y: null,
@@ -23,8 +25,14 @@ export default function ParticleCanvas() {
     };
 
     const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const dpr = window.devicePixelRatio || 1;
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       initParticles();
     };
 
@@ -59,10 +67,8 @@ export default function ParticleCanvas() {
         this.vy = this.vy * this.friction + this.baseVy * (1 - this.friction);
 
         // Screen edge bounds reset
-        if (this.x < 0 || this.x > canvas.width)
-          this.x = Math.random() * canvas.width;
-        if (this.y < 0 || this.y > canvas.height)
-          this.y = Math.random() * canvas.height;
+        if (this.x < 0 || this.x > width) this.x = Math.random() * width;
+        if (this.y < 0 || this.y > height) this.y = Math.random() * height;
 
         // Kinetic fluid transfer when mouse swipes nearby
         if (mouse.x !== null && mouse.y !== null) {
@@ -82,20 +88,17 @@ export default function ParticleCanvas() {
 
     const initParticles = () => {
       particles = [];
-      const density = Math.floor((canvas.width * canvas.height) / 16000);
+      const density = Math.floor((width * height) / 16000);
       for (let i = 0; i < Math.min(density, 100); i++) {
         particles.push(
-          new Particle(
-            Math.random() * canvas.width,
-            Math.random() * canvas.height,
-          ),
+          new Particle(Math.random() * width, Math.random() * height),
         );
       }
     };
 
     function animate() {
       ctx.fillStyle = "#0a0a0a"; // Overwrites the viewport frame entirely with your pitch-neutral tone
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillRect(0, 0, width, height);
 
       // Render and project particle dust fields
       particles.forEach((p) => {
@@ -103,22 +106,30 @@ export default function ParticleCanvas() {
         p.draw(); // Make sure draw() uses alpha > 0.3 for visibility!
       });
 
-      requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(animate);
     }
 
-    const handleMouseMove = (e) => {
+    const updatePointer = (x, y) => {
       if (mouse.lastX !== null && mouse.lastY !== null) {
         // Calculate velocity based on frame-by-frame coordinate gap
-        mouse.vx = e.clientX - mouse.lastX;
-        mouse.vy = e.clientY - mouse.lastY;
+        mouse.vx = x - mouse.lastX;
+        mouse.vy = y - mouse.lastY;
       }
-      mouse.x = e.clientX;
-      mouse.y = e.clientY;
-      mouse.lastX = e.clientX;
-      mouse.lastY = e.clientY;
+      mouse.x = x;
+      mouse.y = y;
+      mouse.lastX = x;
+      mouse.lastY = y;
     };
 
-    const handleMouseLeave = () => {
+    const handleMouseMove = (e) => updatePointer(e.clientX, e.clientY);
+
+    const handleTouchMove = (e) => {
+      if (e.touches.length === 0) return;
+      const touch = e.touches[0];
+      updatePointer(touch.clientX, touch.clientY);
+    };
+
+    const handlePointerLeave = () => {
       mouse.x = null;
       mouse.y = null;
       mouse.lastX = null;
@@ -129,7 +140,10 @@ export default function ParticleCanvas() {
 
     window.addEventListener("resize", resizeCanvas);
     window.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseleave", handleMouseLeave);
+    document.addEventListener("mouseleave", handlePointerLeave);
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchend", handlePointerLeave);
+    window.addEventListener("touchcancel", handlePointerLeave);
 
     resizeCanvas();
     animate();
@@ -138,7 +152,10 @@ export default function ParticleCanvas() {
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener("resize", resizeCanvas);
       window.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseleave", handleMouseLeave);
+      document.removeEventListener("mouseleave", handlePointerLeave);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handlePointerLeave);
+      window.removeEventListener("touchcancel", handlePointerLeave);
     };
   }, []);
 
