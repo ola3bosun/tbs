@@ -1,24 +1,31 @@
-'use server';
+"use server";
 
-const CLIENT_ID = 'REDACTED_SPOTIFY_CLIENT_ID';
-const CLIENT_SECRET = 'REDACTED_SPOTIFY_CLIENT_SECRET';
-const REFRESH_TOKEN = 'REDACTED_SPOTIFY_REFRESH_TOKEN';
+const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID!;
+const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET!;
+const REFRESH_TOKEN = process.env.SPOTIFY_REFRESH_TOKEN!;
 
-const TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token';
-const NOW_PLAYING_ENDPOINT = 'https://api.spotify.com/v1/me/player/currently-playing';
+const TOKEN_ENDPOINT = "https://accounts.spotify.com/api/token";
+const NOW_PLAYING_ENDPOINT =
+  "https://api.spotify.com/v1/me/player/currently-playing";
 
 // Requests a fresh access_token using your long-lived refresh_token
 async function getAccessToken() {
-  const basic = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
-  
+  if (!CLIENT_ID || !CLIENT_SECRET || !REFRESH_TOKEN) {
+    throw new Error(
+      "Missing Spotify credentials. Set SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, and SPOTIFY_REFRESH_TOKEN in your environment.",
+    );
+  }
+
+  const basic = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString("base64");
+
   const response = await fetch(TOKEN_ENDPOINT, {
-    method: 'POST',
+    method: "POST",
     headers: {
       Authorization: `Basic ${basic}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
+      "Content-Type": "application/x-www-form-urlencoded",
     },
     body: new URLSearchParams({
-      grant_type: 'refresh_token',
+      grant_type: "refresh_token",
       refresh_token: REFRESH_TOKEN!,
     }),
     next: { revalidate: 0 }, // Do not cache token requests
@@ -43,18 +50,18 @@ export async function getNowPlaying() {
   }
 
   const song = await response.json();
-  
+
   // Handle private sessions or podcast episodes where item might be null
   if (!song.item) {
     return { isPlaying: false };
   }
 
-return {
-  isPlaying: song.is_playing,
-  title: song.item.name,
-  artist: song.item.artists.map((_artist) => _artist.name).join(', '),
-  album: song.item.album.name,
-  albumImageUrl: song.item.album.images[0]?.url,
-  songUrl: song.item.external_urls.spotify,
-};
+  return {
+    isPlaying: song.is_playing,
+    title: song.item.name,
+    artist: song.item.artists.map((_artist) => _artist.name).join(", "),
+    album: song.item.album.name,
+    albumImageUrl: song.item.album.images[0]?.url,
+    songUrl: song.item.external_urls.spotify,
+  };
 }

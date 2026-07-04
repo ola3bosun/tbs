@@ -29,3 +29,18 @@ An interactive particle array standing in as background micro-dust. Features aut
 ```bash
 git clone [https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git](https://github.com/ola3bosun/tbs.git)
 cd now-playing
+```
+
+### 2. Configure environment variables
+Copy `.env.example` to `.env.local` and fill in your Spotify API credentials:
+```bash
+cp .env.example .env.local
+```
+
+| Variable | Description |
+|---|---|
+| `SPOTIFY_CLIENT_ID` | Client ID from your [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) app |
+| `SPOTIFY_CLIENT_SECRET` | Client secret for the same app (keep this private, never commit it) |
+| `SPOTIFY_REFRESH_TOKEN` | Long-lived refresh token obtained via the Authorization Code flow |
+
+`.env.local` is gitignored and should never be committed. When deploying (e.g. Vercel), set these same variables in your hosting provider's environment variable settings instead.
