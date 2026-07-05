@@ -10,18 +10,26 @@ const NOW_PLAYING_ENDPOINT = "https://api.spotify.com/v1/me/player/currently-pla
 async function getAccessToken() {
   const basic = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString("base64");
   
+  // Explicitly build the form parameters to ensure zero character truncation on Vercel workers
+  const params = new URLSearchParams();
+  params.append("grant_type", "refresh_token");
+  params.append("refresh_token", REFRESH_TOKEN || "");
+
   const response = await fetch(TOKEN_ENDPOINT, {
     method: "POST",
     headers: {
       Authorization: `Basic ${basic}`,
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: new URLSearchParams({
-      grant_type: "refresh_token",
-      refresh_token: REFRESH_TOKEN,
-    }).toString(),
+    body: params.toString(),
     cache: "no-store",
   });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Spotify Token Refresh Failed:", errorText);
+    throw new Error(`Spotify Auth Mismatch: ${response.status}`);
+  }
 
   const data = await response.json();
   return data.access_token;
@@ -30,7 +38,10 @@ async function getAccessToken() {
 export async function GET() {
   try {
     if (!CLIENT_ID || !CLIENT_SECRET || !REFRESH_TOKEN) {
-      return NextResponse.json({ isPlaying: false, error: "Missing tokens on host profile" });
+      return NextResponse.json({ 
+        isPlaying: false, 
+        debug: "Environment tokens missing on live container profile" 
+      });
     }
 
     const access_token = await getAccessToken();
@@ -39,34 +50,32 @@ export async function GET() {
       headers: {
         Authorization: `Bearer ${access_token}`,
       },
-      cache: "no-store", // Crucial for Vercel deployment: drops edge-caching locks
+      cache: "no-store",
     });
 
-    if (response.status === 204 || response.status > 400) {
-      return NextResponse.json({ isPlaying: false });
+    if (response.status === 204) {
+      return NextResponse.json({ isPlaying: false, debug: "204: Nothing currently playing" });
+    }
+
+    if (response.status > 400) {
+      const errLog = await response.text();
+      return NextResponse.json({ isPlaying: false, debug: `Spotify API Error ${response.status}: ${errLog}` });
     }
 
     const song = await response.json();
     
-    if (!song.item) {
-      return NextResponse.json({ isPlaying: false });
+    if (!song || !song.item) {
+      return NextResponse.json({ isPlaying: false, debug: "Empty track object payload" });
     }
 
-    const isPlaying = song.is_playing;
-    const title = song.item.name;
-    const artist = song.item.artists.map((_artist) => _artist.name).join(", ");
-    const album = song.item.album.name;
-    const songUrl = song.item.external_urls.spotify;
-
     return NextResponse.json({
-      isPlaying,
-      title,
-      artist,
-      album,
-      songUrl,
+      isPlaying: song.is_playing,
+      title: song.item.name,
+      artist: song.item.artists.map((_artist) => _artist.name).join(", "),
+      album: song.item.album.name,
+      songUrl: song.item.external_urls.spotify,
     });
   } catch (error) {
-    console.error("Spotify route handler error:", error);
-    return NextResponse.json({ isPlaying: false });
+    return NextResponse.json({ isPlaying: false, debug: error.message });
   }
 }
