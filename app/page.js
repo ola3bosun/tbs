@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { getNowPlaying } from "./actions/spotify";
+// import { getNowPlaying } from "./actions/spotify";
 import CustomCursor from "./components/CustomCursor";
 import SystemMatrix from "./components/SystemMatrix";
 import ParticleCanvas from "./components/ParticleCanvas";
@@ -18,20 +18,23 @@ export default function Portfolio() {
 
   const initialMount = useRef(true);
 
-  useEffect(() => {
-    async function updateTrack() {
-      try {
-        const data = await getNowPlaying();
-        setTrack(data);
-      } catch (error) {
-        console.error("Failed to fetch track info:", error);
-      }
+useEffect(() => {
+  async function updateTrack() {
+    try {
+      // Hits the static API router channel directly
+      const res = await fetch("/api/spotify");
+      if (!res.ok) throw new Error("Network response mismatch");
+      const data = await res.json();
+      setTrack(data);
+    } catch (error) {
+      console.error("Failed to fetch track info via API route:", error);
     }
+  }
 
-    updateTrack();
-    const interval = setInterval(updateTrack, 15000);
-    return () => clearInterval(interval);
-  }, []);
+  updateTrack();
+  const interval = setInterval(updateTrack, 15000);
+  return () => clearInterval(interval);
+}, []);
 
   useEffect(() => {
     if (initialMount.current) {
