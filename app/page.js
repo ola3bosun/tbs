@@ -153,7 +153,7 @@ export default function Home() {
 
           <section 
             ref={aboutRef} 
-            className="absolute inset-0 flex flex-col justify-between px-6 sm:px-12 md:px-20 py-12 z-30 bg-[#0a0a0a] origin-center"
+            className="absolute inset-0 flex flex-col justify-between px-6 sm:px-12 md:px-20 py-12 z-30 bg-[#d3d3d3] origin-center"
           >
             {/* HUD Geometrics (Fades in late) */}
             <div ref={hudLinesRef} className="absolute inset-4 sm:inset-8 border border-neutral-800 hud-border pointer-events-none" />
