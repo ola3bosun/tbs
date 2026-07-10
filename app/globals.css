@@ -71,3 +71,12 @@ button {
         transform: translateY(4px);
     }
 }
+
+.line-clip {
+  display: block;
+  position: relative;
+}
+
+.line-clip span {
+  will-change: transform;
+}
