@@ -1,4 +1,3 @@
-// app/page.js
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -27,38 +26,38 @@ export default function Home() {
     if (!isLoading) {
       const ctx = gsap.context(() => {
         
-        // 1. Initial Load Reveal (Landing Page Elements)
+        // Initial Load Reveal (Landing Page Elements)
         gsap.fromTo(
           ".landing-fade",
           { opacity: 0, y: 20 },
           { opacity: 1, y: 0, duration: 1.2, stagger: 0.1, ease: "power3.out", delay: 0.2 }
         );
 
-        // 2. THE MASTER GSAP PIN TIMELINE
+        // THE MASTER GSAP PIN TIMELINE 
         const tl = gsap.timeline({
           scrollTrigger: {
             trigger: scrollTrackRef.current,
             start: "top top",
-            end: "+=200%", // Adds 2 full screens of scroll distance to scrub through
-            pin: true,     // GSAP forces the camera to freeze perfectly
-            scrub: 1.2,    // Heavy dampening for liquid-smooth physics
+            end: "+=300%", 
+            pin: true,     
+            scrub: 1.2,    
           },
         });
 
-        // A. The "Sinking" Landing Layer
+        // The Sinking Landing Layer
         tl.to(
           landingRef.current,
           {
-            scale: 0.85, // Shrinks slightly into the void
-            opacity: 0,  // Fades to black
-            y: "-10vh",  // Drifts upward slightly
+            scale: 0.85, 
+            opacity: 0,  
+            y: "-10vh",  
             ease: "power2.inOut",
             duration: 1,
           },
           0
         );
 
-        // B. The Spinning Reticle (Dead center of the void)
+        // The Spinning Reticle 
         tl.to(
           apertureTargetRef.current,
           {
@@ -71,28 +70,41 @@ export default function Home() {
           0
         );
 
-        // C. The Mechanical Aperture Opening (About Section)
+        // The Mechanical Aperture Opening (About Section)
         tl.fromTo(
           aboutRef.current,
           { 
-            clipPath: "circle(0% at 50% 50%)", // Starts as a closed pinpoint
-            scale: 1.1, // Starts slightly pushed forward
+            clipPath: "circle(0% at 50% 50%)", 
+            scale: 1.1, 
           },
           { 
-            clipPath: "circle(150% at 50% 50%)", // Expands to cover the whole screen
-            scale: 1,   // Snaps to perfect scale
+            clipPath: "circle(150% at 50% 50%)", 
+            scale: 1,   
             ease: "power3.inOut",
             duration: 1,
           },
           0
         );
 
-        // D. Slide in the HUD crosshairs and framing once the aperture is wide enough
+        // The HUD Crosshairs
         tl.fromTo(
           ".hud-border",
           { scaleX: 0, scaleY: 0, opacity: 0 },
           { scaleX: 1, scaleY: 1, opacity: 1, duration: 0.4, ease: "power4.out" },
-          0.6 // Triggers at 60% of the scroll timeline
+          0.6 
+        );
+
+        //  THE NEW EXIT TRANSITION (SYSTEM PURGE)
+        tl.to(
+          aboutRef.current,
+          {
+            scale: 2.5,          // Camera flies straight THROUGH the HUD
+            opacity: 0,          // Fades into the void
+            filter: "blur(12px)", // Optical velocity blur (G-Force)
+            ease: "power3.in",
+            duration: 1,
+          },
+          "+=0.8" // CRITICAL: This adds a "dead zone" to the scroll track so the user can read the text before it blasts away!
         );
 
       }, scrollTrackRef);
@@ -103,7 +115,7 @@ export default function Home() {
 
   return (
     <SmoothScroll>
-      <div className="bg-[#000000] text-[#f4efe9] font-sans selection:bg-white selection:text-black">
+      <div className="bg-[#000000] text-[#f4efe9] font-sans selection:bg-white selection:text-black relative">
         
         <CinematicLoader onComplete={() => setIsLoading(false)} />
         
@@ -112,25 +124,21 @@ export default function Home() {
           {!isLoading && <CustomCursor isHovered={isHovered} />}
         </div>
 
-        {/* ========================================================= */}
-        {/* THE GSAP PINNED VIEWPORT (100vh)                          */}
-        {/* ========================================================= */}
+        {/* THE GSAP PINNED VIEWPORT */}
         <div ref={scrollTrackRef} className="relative h-screen w-full overflow-hidden bg-black z-10">
             
-          {/* ------------------------------------------------ */}
-          {/* LAYER 01: THE LANDING (Sinks into background)    */}
-          {/* ------------------------------------------------ */}
+          {/* THE LANDING CONTENT */}
           <section 
             ref={landingRef} 
-            className="absolute inset-0 flex flex-col justify-center px-6 sm:px-12 md:px-5 z-10 bg-black origin-top"
+            className="absolute inset-0 flex flex-col justify-center px-6 sm:px-12 md:px-20 z-10 bg-black origin-top"
           >
             <div className="w-full flex justify-between font-mono text-[10px] text-neutral-500 uppercase tracking-[0.2em] mb-12 landing-fade">
-              <div>// LANDING_PAGE</div>
+
             </div>
 
             <div className="max-w-5xl space-y-2 landing-fade">
               <h1 className="text-[12vw] md:text-[8vw] font-light tracking-tighter leading-[0.9]">
-                // TBS
+               // TBS
               </h1>
             </div>
 
@@ -140,7 +148,7 @@ export default function Home() {
             </div>
           </section>
 
-          {/* THE APERTURE RETICLE (Sits perfectly in the center as a target) */}
+          {/* THE APERTURE RETICLE */}
           <div 
             ref={apertureTargetRef}
             className="absolute z-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none opacity-50"
@@ -151,16 +159,21 @@ export default function Home() {
             <div className="h-[1px] w-16 bg-neutral-700 absolute" />
           </div>
 
+          {/* THE ABOUT HUD: To be moved to a separate component */}
           <section 
             ref={aboutRef} 
-            className="absolute inset-0 flex flex-col justify-between px-6 sm:px-12 md:px-20 py-12 z-30 bg-[#d3d3d3] origin-center"
+            className="absolute inset-0 flex flex-col justify-between px-6 sm:px-12 md:px-20 py-12 z-30 bg-[#0a0a0a] origin-center"
           >
-            {/* HUD Geometrics (Fades in late) */}
             <div ref={hudLinesRef} className="absolute inset-4 sm:inset-8 border border-neutral-800 hud-border pointer-events-none" />
             
             <div className="relative z-10 w-full flex justify-between font-mono text-[9px] text-neutral-400 uppercase tracking-[0.2em]">
               <div>[01] ABOUT_SECTION</div>
               <div>STATUS: AWAITING_DEV_TBS</div>
+            </div>
+
+            {/* ABOUT SECTION CONTENT */}
+            <div className="relative z-10 max-w-2xl grid grid-cols-1 md:grid-cols-2 gap-12 font-mono text-xs text-neutral-400 leading-relaxed pt-20">
+             
             </div>
 
             <div className="relative z-10 w-full font-mono text-[10px] text-neutral-600 uppercase tracking-widest text-right mt-auto">
@@ -170,7 +183,16 @@ export default function Home() {
 
         </div>
 
-        <div className="relative z-40 bg-black">
+        {/* THE PROJECTS SECTION: To be moved to a separate component */}
+        <div className="relative h-screen w-full bg-[#0a0a0a] z-10 flex flex-col items-center justify-center border-t border-neutral-900">
+          {/* <div className="font-mono text-[9px] text-neutral-600 uppercase tracking-[0.3em] flex items-center gap-4 opacity-50">
+             <span className="w-1 h-1 bg-neutral-500 rounded-full animate-ping" />
+             <span>Awaiting_Next_Node</span>
+          </div> */}
+          <h1>{'// PROJECTS'}</h1>
+        </div>
+
+        <div className="relative z-40 bg-black border-t border-neutral-900">
           <Footer 
             isLoading={isLoading} 
             setIsHovered={setIsHovered} 
