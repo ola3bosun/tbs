@@ -1,3 +1,4 @@
+// app/page.js
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -26,14 +27,14 @@ export default function Home() {
     if (!isLoading) {
       const ctx = gsap.context(() => {
         
-        // Initial Load Reveal (Landing Page Elements)
+        // Initial Load Reveal
         gsap.fromTo(
           ".landing-fade",
           { opacity: 0, y: 20 },
           { opacity: 1, y: 0, duration: 1.2, stagger: 0.1, ease: "power3.out", delay: 0.2 }
         );
 
-        // THE MASTER GSAP PIN TIMELINE 
+        // THE MASTER GSAP PIN TIMELINE
         const tl = gsap.timeline({
           scrollTrigger: {
             trigger: scrollTrackRef.current,
@@ -94,17 +95,17 @@ export default function Home() {
           0.6 
         );
 
-        //  THE NEW EXIT TRANSITION (SYSTEM PURGE)
+        // THE EXIT TRANSITION (SYSTEM PURGE)
         tl.to(
           aboutRef.current,
           {
-            scale: 2.5,          // Camera flies straight THROUGH the HUD
-            opacity: 0,          // Fades into the void
+            scale: 2.5,           // Camera flies straight THROUGH the HUD
+            opacity: 0,           // Fades into the void
             filter: "blur(12px)", // Optical velocity blur (G-Force)
             ease: "power3.in",
             duration: 1,
           },
-          "+=0.8" // CRITICAL: This adds a "dead zone" to the scroll track so the user can read the text before it blasts away!
+          "+=0.8" // The reading "dead zone"
         );
 
       }, scrollTrackRef);
@@ -115,7 +116,28 @@ export default function Home() {
 
   return (
     <SmoothScroll>
-      <div className="bg-[#000000] text-[#f4efe9] font-sans selection:bg-white selection:text-black relative">
+      
+      {/* ========================================================= */}
+      {/* 1. THE TRAPDOOR FOOTER (Fixed to the background)          */}
+      {/* ========================================================= */}
+      <Footer 
+        isLoading={isLoading} 
+        setIsHovered={setIsHovered} 
+        setActiveHover={setActiveHover} 
+      />
+
+      {/* ========================================================= */}
+      {/* 2. THE CURTAIN (Main Content)                             */}
+      {/* ========================================================= */}
+      {/* 
+        CRITICAL FIX: We use `overflow-x-clip` here. 
+        It prevents the About section from expanding off the screen sideways, 
+        without breaking the GSAP vertical scroll trigger mechanics! 
+      */}
+      <main 
+        id="main-curtain" 
+        className="relative z-10 bg-[#000000] text-[#f4efe9] font-sans selection:bg-white selection:text-black overflow-x-clip shadow-[0_30px_100px_rgba(0,0,0,1)]"
+      >
         
         <CinematicLoader onComplete={() => setIsLoading(false)} />
         
@@ -133,7 +155,6 @@ export default function Home() {
             className="absolute inset-0 flex flex-col justify-center px-6 sm:px-12 md:px-20 z-10 bg-black origin-top"
           >
             <div className="w-full flex justify-between font-mono text-[10px] text-neutral-500 uppercase tracking-[0.2em] mb-12 landing-fade">
-
             </div>
 
             <div className="max-w-5xl space-y-2 landing-fade">
@@ -143,7 +164,7 @@ export default function Home() {
             </div>
 
             <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 text-[9px] font-mono text-neutral-600 uppercase tracking-widest landing-fade">
-              <span className="w-1.5 h-1.5 border border-neutral-500 animate-ping" />
+              <span className="w-1.5 h-1.5 border border-neutral-500 animate-pulse" />
               <p>Scroll</p>
             </div>
           </section>
@@ -159,10 +180,10 @@ export default function Home() {
             <div className="h-[1px] w-16 bg-neutral-700 absolute" />
           </div>
 
-          {/* THE ABOUT HUD: To be moved to a separate component */}
+          {/* THE ABOUT HUD */}
           <section 
             ref={aboutRef} 
-            className="absolute inset-0 flex flex-col justify-between px-6 sm:px-12 md:px-20 py-12 z-30 bg-[#0a0a0a] origin-center"
+            className="absolute inset-0 flex flex-col justify-between px-6 sm:px-12 md:px-12 py-12 z-30 bg-[#0a0a0a] origin-center"
           >
             <div ref={hudLinesRef} className="absolute inset-4 sm:inset-8 border border-neutral-800 hud-border pointer-events-none" />
             
@@ -173,34 +194,26 @@ export default function Home() {
 
             {/* ABOUT SECTION CONTENT */}
             <div className="relative z-10 max-w-2xl grid grid-cols-1 md:grid-cols-2 gap-12 font-mono text-xs text-neutral-400 leading-relaxed pt-20">
-             
+             ABOUT
             </div>
 
             <div className="relative z-10 w-full font-mono text-[10px] text-neutral-600 uppercase tracking-widest text-right mt-auto">
               SYS_QUERY // WHO_IS_TBS?
             </div>
           </section>
-
+          
+          <h1>XOXO</h1>
         </div>
 
-        {/* THE PROJECTS SECTION: To be moved to a separate component */}
+        {/* THE PROJECTS SECTION */}
         <div className="relative h-screen w-full bg-[#0a0a0a] z-10 flex flex-col items-center justify-center border-t border-neutral-900">
-          {/* <div className="font-mono text-[9px] text-neutral-600 uppercase tracking-[0.3em] flex items-center gap-4 opacity-50">
-             <span className="w-1 h-1 bg-neutral-500 rounded-full animate-ping" />
-             <span>Awaiting_Next_Node</span>
-          </div> */}
           <h1>{'// PROJECTS'}</h1>
         </div>
 
-        <div className="relative z-40 bg-black border-t border-neutral-900">
-          <Footer 
-            isLoading={isLoading} 
-            setIsHovered={setIsHovered} 
-            setActiveHover={setActiveHover} 
-          />
-        </div>
+      </main>
 
-      </div>
+      <div className="h-screen w-full pointer-events-none bg-transparent" />
+
     </SmoothScroll>
   );
 }
