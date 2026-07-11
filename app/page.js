@@ -171,7 +171,7 @@ export default function Home() {
           {/* THE ABOUT HUD */}
           <section 
             ref={aboutRef} 
-            className="absolute inset-0 flex flex-col justify-between px-6 sm:px-12 md:px-12 py-12 z-30 bg-[#0a0a0a] origin-center"
+            className="absolute inset-0 flex flex-col justify-between px-6 sm:px-12 md:px-12 py-12 z-30 bg-[#ede6d8] origin-center"
           >
             <div ref={hudLinesRef} className="absolute inset-4 sm:inset-8 border border-neutral-800 hud-border pointer-events-none" />
             
@@ -190,7 +190,6 @@ export default function Home() {
             </div>
           </section>
           
-          <h1>XOXO</h1>
         </div>
 
         {/* THE PROJECTS SECTION */}
