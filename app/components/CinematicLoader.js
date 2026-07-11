@@ -1,4 +1,3 @@
-// components/CinematicLoader.js
 "use client";
 
 import { useEffect, useState } from "react";

@@ -1,4 +1,3 @@
-// app/page.js
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -99,8 +98,8 @@ export default function Home() {
         tl.to(
           aboutRef.current,
           {
-            scale: 2.5,           // Camera flies straight THROUGH the HUD
-            opacity: 0,           // Fades into the void
+            scale: 2.5,           // Camera flies straight through
+            opacity: 0,           // Fades
             filter: "blur(12px)", // Optical velocity blur (G-Force)
             ease: "power3.in",
             duration: 1,
@@ -116,24 +115,13 @@ export default function Home() {
 
   return (
     <SmoothScroll>
-      
-      {/* ========================================================= */}
-      {/* 1. THE TRAPDOOR FOOTER (Fixed to the background)          */}
-      {/* ========================================================= */}
+
       <Footer 
         isLoading={isLoading} 
         setIsHovered={setIsHovered} 
         setActiveHover={setActiveHover} 
       />
 
-      {/* ========================================================= */}
-      {/* 2. THE CURTAIN (Main Content)                             */}
-      {/* ========================================================= */}
-      {/* 
-        CRITICAL FIX: We use `overflow-x-clip` here. 
-        It prevents the About section from expanding off the screen sideways, 
-        without breaking the GSAP vertical scroll trigger mechanics! 
-      */}
       <main 
         id="main-curtain" 
         className="relative z-10 bg-[#000000] text-[#f4efe9] font-sans selection:bg-white selection:text-black overflow-x-clip shadow-[0_30px_100px_rgba(0,0,0,1)]"

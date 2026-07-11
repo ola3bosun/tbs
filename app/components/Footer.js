@@ -1,4 +1,3 @@
-// components/Footer.jsx
 "use client";
 
 import { useEffect, useState, useRef } from "react";
