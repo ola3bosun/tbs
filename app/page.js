@@ -6,7 +6,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import SmoothScroll from "./components/SmoothScroll";
 import CustomCursor from "./components/CustomCursor";
 import CinematicLoader from "./components/CinematicLoader";
-import ProjectHelix from "./components/ProjectHelix";
+import SelectedWorks from "./components/SelectedWorks";
 import Footer from "./components/Footer";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -201,12 +201,11 @@ export default function Home() {
 
       {/* THE PROJECTS SECTION */}
       <div className="relative h-screen w-full bg-[#0a0a0a] z-10 flex flex-col items-center justify-center border-t border-neutral-900">
-        <ProjectHelix />
+        <SelectedWorks
+          setIsHovered={setIsHovered}
+          setActiveHover={setActiveHover}
+        />
       </div>
-
-      <Footer />
-
-
 
     </SmoothScroll>
   );
