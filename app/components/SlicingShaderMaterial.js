@@ -9,6 +9,7 @@ const SlicingShaderMaterial = forwardRef(({ imageUrl }, ref) => {
   // Load the project texture
   const texture = useTexture(imageUrl);
 
+  // We memoize the uniforms so React doesn't recreate them on every frame
   const uniforms = useMemo(
     () => ({
       uTexture: { value: texture },

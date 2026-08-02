@@ -16,7 +16,7 @@ import ProjectDetails from "./components/ProjectDetails";
 gsap.registerPlugin(ScrollTrigger);
 
 export default function Home() {
-  const [isLoading, setIsLoading] = useState(false); 
+  const [isLoading, setIsLoading] = useState(false);
   const [loaderFinished, setLoaderFinished] = useState(false);
   const [activeHover, setActiveHover] = useState(null);
   const [track, setTrack] = useState({ isPlaying: false });
@@ -25,7 +25,7 @@ export default function Home() {
   const [activeProject, setActiveProject] = useState(null);
   const scrollTrackRef = useRef(null);
   const scrollProxy = useRef(0);
-  
+
   // Kinetic Typography Refs
   const textRef1 = useRef(null);
   const textRef2 = useRef(null);
@@ -33,7 +33,7 @@ export default function Home() {
 
   // Poll Spotify Status
   useEffect(() => {
-    let isMounted = true; 
+    let isMounted = true;
     async function updateTrack() {
       try {
         const res = await fetch("/api/spotify");
@@ -52,7 +52,7 @@ export default function Home() {
   // Kinetic Typography Mouse Tracking
   useEffect(() => {
     if (inProjectView) return; // Freeze text if in project view
-    
+
     const handleMouseMove = (e) => {
       const x = (e.clientX / window.innerWidth) * 2 - 1;
       const y = (e.clientY / window.innerHeight) * 2 - 1;
@@ -92,7 +92,6 @@ export default function Home() {
       {inProjectView && <ProjectDetails project={activeProject} onClose={() => {
         setInProjectView(false);
         setActiveProject(null);
-        // Dispatch a custom event to notify SpiralGallery to reset
         window.dispatchEvent(new Event('closeProjectDetails'));
       }} />}
 
@@ -124,9 +123,9 @@ export default function Home() {
 
       {/* FOREGROUND UI (Z-20) */}
       <div className="fixed inset-0 pointer-events-none z-20 flex flex-col justify-between p-6 sm:p-12">
-        
+
         <div className="flex justify-between items-start w-full pointer-events-auto">
-          
+
           <nav className="space-y-3">
             <span className="block text-[9px] uppercase tracking-widest text-neutral-500 font-mono">
               {"// SOCIALS"}

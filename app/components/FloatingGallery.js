@@ -23,22 +23,6 @@ const galleryItems = Array.from({ length: 20 }).map((_, i) => {
   const theta = i * (Math.PI * 2 / 6); // 6 items per full circle
   const z = -i * 1.5; // Space them out along the Z axis
   
-  const x = Math.cos(theta) * radius;
-  const y = Math.sin(theta) * radius;
-  
-  // Rotate to face inward. 
-  // We want the plane's local Y to go along the cylinder's Z axis.
-  // And we want the plane to curve around the Z axis.
-  const dummy = new THREE.Object3D();
-  dummy.position.set(x, y, z);
-  dummy.up.set(0, 0, 1);
-  dummy.lookAt(0, 0, z); // Look at center of cylinder
-  // lookAt makes -Z point to target. We want +Z to point to target (inward).
-  dummy.rotateY(Math.PI);
-  // We also want the image to stand up along the Z axis.
-  // When looking at (0,0,z) with up=(0,0,1), local Y is up (along Z).
-  // So it naturally stands along Z.
-
   // Base parameters for dynamic calculation in useFrame
   const rotOffsetX = (Math.random() - 0.5) * 0.2;
   const rotOffsetY = (Math.random() - 0.5) * 0.2;
@@ -180,9 +164,9 @@ export default function FloatingGallery({ setActiveProject, inProjectView }) {
       // Smooth interpolation (inertia)
       // Use dt-independent lerp: 1 - exp(-decay * dt)
       const lerpFactor = 1 - Math.exp(-4.0 * delta); // Adjust 4.0 for stiffness
-      
+
       mesh.position.lerp(targetPos, lerpFactor);
-      
+
       // Slerp rotation
       const currentQuat = new THREE.Quaternion().setFromEuler(mesh.rotation);
       const targetQuat = new THREE.Quaternion().setFromEuler(targetRot);
@@ -192,7 +176,7 @@ export default function FloatingGallery({ setActiveProject, inProjectView }) {
       // Lerp scale
       mesh.scale.setScalar(lerp(mesh.scale.x, targetScale, lerpFactor));
 
-      // Lerp shader uniforms (Opacity, Saturation, Brightness)
+      // Lerp shader uniforms (Opacity, Saturation, Brightness, Curve)
       if (mat && mat.uniforms) {
         let targetSaturation = 0.0;
         let targetBrightness = 1.0;
@@ -207,7 +191,9 @@ export default function FloatingGallery({ setActiveProject, inProjectView }) {
         mat.uniforms.uOpacity.value = lerp(mat.uniforms.uOpacity.value, targetOpacity, lerpFactor);
         mat.uniforms.uSaturation.value = lerp(mat.uniforms.uSaturation.value, targetSaturation, lerpFactor);
         mat.uniforms.uBrightness.value = lerp(mat.uniforms.uBrightness.value, targetBrightness, lerpFactor);
-        mat.uniforms.uCurve.value = lerp(mat.uniforms.uCurve.value, targetCurve, lerpFactor);
+        if (mat.uniforms.uCurve) {
+          mat.uniforms.uCurve.value = lerp(mat.uniforms.uCurve.value, targetCurve, lerpFactor);
+        }
       }
 
       // Handle shadow depth
@@ -216,7 +202,7 @@ export default function FloatingGallery({ setActiveProject, inProjectView }) {
         const shadowDist = isHovered ? -0.5 : -0.1;
         const targetShadowZ = shadowDist * targetScale;
         shadow.position.z = lerp(shadow.position.z, targetShadowZ, lerpFactor);
-        
+
         // Shadow opacity
         shadow.material.opacity = lerp(shadow.material.opacity, isHovered ? 0.6 : 0.3, lerpFactor);
       }
@@ -244,23 +230,22 @@ export default function FloatingGallery({ setActiveProject, inProjectView }) {
     <group ref={groupRef} onPointerMissed={() => setHoveredIndex(null)}>
       {galleryItems.map((item, i) => (
         <group key={item.uid}>
-          
-          <mesh 
-            ref={(el) => (meshesRef.current[i] = el)} 
+
+          <mesh
+            ref={(el) => (meshesRef.current[i] = el)}
             onPointerOver={(e) => handlePointerOver(e, i)}
             onPointerOut={handlePointerOut}
             onClick={(e) => handleClick(e, item)}
           >
             <planeGeometry args={[3.2, 2.4, 32, 32]} />
-            <SlicingShaderMaterial 
-              ref={(el) => (materialsRef.current[i] = el)} 
+            <SlicingShaderMaterial
+              ref={(el) => (materialsRef.current[i] = el)}
               imageUrl={item.url}
-              // We'll hijack SlicingShaderMaterial to support opacity fading
               transparent={true}
             />
-            
+
             {/* Deep Z-space drop shadow attached as child to scale/rotate with it */}
-            <mesh 
+            <mesh
               ref={(el) => (shadowRefs.current[i] = el)}
               position={[0, -0.2, -0.1]}
             >
@@ -268,7 +253,7 @@ export default function FloatingGallery({ setActiveProject, inProjectView }) {
               <meshBasicMaterial color="#000000" transparent opacity={0.3} />
             </mesh>
           </mesh>
-          
+
         </group>
       ))}
     </group>
