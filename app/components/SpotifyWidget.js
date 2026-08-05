@@ -16,7 +16,7 @@ export default function SpotifyWidget({ track = { isPlaying: false } }) {
             Live <span className="w-1 h-1 bg-white animate-ping" />
           </span>
           <p className="text-xs font-medium text-white group-hover:text-neutral-300 transition-colors">
-            {track.title} <span className="text-neutral-500">— {track.artist}</span>
+            [ {track.title} <span className="text-neutral-500">— {track.artist} </span> {" // "} {track.album} ]
           </p>
         </a>
       ) : (
