@@ -114,12 +114,16 @@ export default function Home() {
       </div>
 
       {/* 3D FLOATING GALLERY (Z-10) */}
-      <FloatingScene setActiveProject={(project) => {
-        setActiveProject(project);
-        if (project) {
-          setInProjectView(true);
-        }
-      }} inProjectView={inProjectView} />
+      <FloatingScene 
+        activeProject={activeProject}
+        setActiveProject={(project) => {
+          setActiveProject(project);
+          if (project) {
+            setInProjectView(true);
+          }
+        }} 
+        inProjectView={inProjectView} 
+      />
 
       {/* FOREGROUND UI (Z-20) */}
       <div className="fixed inset-0 pointer-events-none z-20 flex flex-col justify-between p-6 sm:p-12">
@@ -141,6 +145,8 @@ export default function Home() {
                 <h3 className="text-sm font-medium text-[#ecdfcc]">GH</h3>
               </a>
             </div>
+
+            <SystemMatrix track={track} activeHover={activeHover} />
           </nav>
 
           <SpotifyWidget track={track} />
@@ -151,7 +157,7 @@ export default function Home() {
           <p className="font-mono text-sm text-[#ecdfcc] mix-blend-difference mb-8">
             Frontend developer crafting immersive digital experiences through motion, typography, and thoughtful engineering.
           </p>
-          <SystemMatrix track={track} activeHover={activeHover} />
+          
         </main>
       </div>
 

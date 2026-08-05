@@ -4,18 +4,19 @@ import { useRef, useMemo, useState, useEffect } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { gsap } from "gsap";
+import { Html } from "@react-three/drei";
 import SlicingShaderMaterial from "./SlicingShaderMaterial";
 
-// Generate 20 projects based on the original data
+// Generate 5 projects based on the original data
 const baseProjects = [
-  { id: "01", title: "Transcend Projects", url: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1024&auto=format&fit=crop" },
-  { id: "02", title: "TNS_OS", url: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1024&auto=format&fit=crop" },
-  { id: "03", title: "The Nuanced Studio", url: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1024&auto=format&fit=crop" },
-  { id: "04", title: "ProjectHelix", url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1024&auto=format&fit=crop" },
-  { id: "05", title: "Trimly", url: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1024&auto=format&fit=crop" }
+  { id: "01", title: "Transcend Projects", url: "/proj-1.png" },
+  { id: "02", title: "The Nuanced Studio", url: "/proj-2.png" },
+  { id: "03", title: "Aproko Doctor", url: "/proj-3.png" },
+  { id: "04", title: "Heat Art Store", url: "/proj-1.png" },
+  { id: "05", title: "Trimly", url: "/proj-2.png" }
 ];
 
-const galleryItems = Array.from({ length: 20 }).map((_, i) => {
+const galleryItems = Array.from({ length: 12 }).map((_, i) => {
   const base = baseProjects[i % baseProjects.length];
   
   // Cylindrical Spiral Layout
@@ -43,11 +44,10 @@ const galleryItems = Array.from({ length: 20 }).map((_, i) => {
   };
 });
 
-export default function FloatingGallery({ setActiveProject, inProjectView }) {
+export default function FloatingGallery({ activeProject, setActiveProject, inProjectView }) {
   const groupRef = useRef();
   const meshesRef = useRef([]);
   const materialsRef = useRef([]);
-  const shadowRefs = useRef([]);
   
   const { viewport, camera } = useThree();
   const [hoveredIndex, setHoveredIndex] = useState(null);
@@ -77,11 +77,11 @@ export default function FloatingGallery({ setActiveProject, inProjectView }) {
     galleryItems.forEach((item, i) => {
       const mesh = meshesRef.current[i];
       const mat = materialsRef.current[i];
-      const shadow = shadowRefs.current[i];
       if (!mesh) return;
 
       const isHovered = hoveredIndex === i;
       const hasHovered = hoveredIndex !== null;
+      const isActive = activeProject?.uid === item.uid;
 
       // 1. Calculate dynamic barrel roll position
       const radius = 5.0;
@@ -119,18 +119,27 @@ export default function FloatingGallery({ setActiveProject, inProjectView }) {
       let targetOpacity = 0.8; // Default opacity
       let targetCurve = 1.0; // Default curved
 
-      if (isHovered) {
-        // Hero Card Logic
-        // Ease toward center, brought forward
-        targetPos.set(cursor.x * 0.1, cursor.y * 0.1, 3);
-        
-        // Straighten out
+      if (isActive) {
+        // Active/Fullscreen Card Logic
+        // Move to center, straighten out, scale up, and flatten completely
+        targetPos.set(cursor.x * 0.05, cursor.y * 0.05, 3.5); // Still follow cursor very slightly for depth
         targetRot.set(0, 0, 0);
-        
-        // Scale up
-        targetScale = item.baseScale * 1.1; // Scale up to 110%
+        targetScale = item.baseScale * 1.5; 
         targetOpacity = 1.0;
-        targetCurve = 0.0; // Flatten the card completely
+        targetCurve = 0.0; 
+      } else if (inProjectView) {
+        // Non-active cards when in project view
+        targetPos.z -= 4.0; 
+        targetScale = item.baseScale * 0.8;
+        targetOpacity = 0.0; 
+      } else if (isHovered) {
+        // Hover Card Logic
+        targetPos.z += 0.5; // Bring slightly forward
+        
+        // Scale up slightly
+        targetScale = item.baseScale * 1.05; 
+        targetOpacity = 1.0;
+        targetCurve = 0.5; // Flatten slightly
         
       } else if (hasHovered) {
         // Background Cards Logic (Repulsion & Dimming)
@@ -195,17 +204,6 @@ export default function FloatingGallery({ setActiveProject, inProjectView }) {
           mat.uniforms.uCurve.value = lerp(mat.uniforms.uCurve.value, targetCurve, lerpFactor);
         }
       }
-
-      // Handle shadow depth
-      if (shadow) {
-        // Shadow moves further down/back when scale is larger (hero)
-        const shadowDist = isHovered ? -0.5 : -0.1;
-        const targetShadowZ = shadowDist * targetScale;
-        shadow.position.z = lerp(shadow.position.z, targetShadowZ, lerpFactor);
-
-        // Shadow opacity
-        shadow.material.opacity = lerp(shadow.material.opacity, isHovered ? 0.6 : 0.3, lerpFactor);
-      }
     });
   });
 
@@ -243,15 +241,13 @@ export default function FloatingGallery({ setActiveProject, inProjectView }) {
               imageUrl={item.url}
               transparent={true}
             />
-
-            {/* Deep Z-space drop shadow attached as child to scale/rotate with it */}
-            <mesh
-              ref={(el) => (shadowRefs.current[i] = el)}
-              position={[0, -0.2, -0.1]}
-            >
-              <planeGeometry args={[3.5, 2.7]} />
-              <meshBasicMaterial color="#000000" transparent opacity={0.3} />
-            </mesh>
+            {hoveredIndex === i && activeProject?.uid !== item.uid && (
+              <Html center position={[0, -1.6, 0.2]} className="pointer-events-none z-50">
+                <div className="bg-[#0a0a0a]/90 text-[#ecdfcc] px-4 py-2 rounded-full font-mono text-[10px] uppercase tracking-widest border border-neutral-800 backdrop-blur-md whitespace-nowrap shadow-2xl">
+                  {item.title} <span className="text-neutral-500 opacity-50 ml-2">// Click to view</span>
+                </div>
+              </Html>
+            )}
           </mesh>
 
         </group>
