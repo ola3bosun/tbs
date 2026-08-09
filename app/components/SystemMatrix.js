@@ -1,9 +1,8 @@
-// components/SystemMatrix.js
 "use client";
 
 import { useState, useEffect, useRef } from "react";
 
-export default function SystemMatrix({ track, activeHover }) {
+export default function SystemMatrix({ track = { isPlaying: false }, activeHover }) {
   const [time, setTime] = useState("");
   const [logs, setLogs] = useState([]);
   const logContainerRef = useRef(null);
@@ -29,8 +28,6 @@ export default function SystemMatrix({ track, activeHover }) {
   useEffect(() => {
     const startupSequence = [
       "Contacting dev_TBS...",
-      "Vercel core environment: handshaked.",
-      "Turbopack local compiler: active // 60fps nominal.",
       "Establishing Spotify stream connection...",
     ];
 
@@ -40,7 +37,7 @@ export default function SystemMatrix({ track, activeHover }) {
           hour12: false,
         });
         setLogs((prev) => [...prev, `[${timestamp}] ${msg}`]);
-      }, index * 400); // Stagger the lines beautifully on load
+      }, index * 400);
     });
   }, []);
 
@@ -78,11 +75,11 @@ export default function SystemMatrix({ track, activeHover }) {
   }, [logs]);
 
   return (
-    <div className="hidden md:flex flex-col space-y-6 font-mono text-[10px] text-neutral-500 tracking-wider uppercase h-[220px] justify-between pt-2">
+    <div className="flex flex-col space-y-4 md:space-y-6 font-mono text-[10px] text-neutral-500 tracking-wider uppercase md:h-[220px] justify-between pt-2">
       {/* Structural Static Meta Information */}
       <div className="space-y-4">
         <div className="space-y-1">
-          <span className="text-neutral-600">// Location</span>
+          <span className="text-neutral-600">{"// Location"}</span>
           <p className="text-neutral-400">Ibadan, NG / 7.3775° N, 3.9470° E</p>
           <p className="text-neutral-400">
             Local Time:{" "}
@@ -94,9 +91,9 @@ export default function SystemMatrix({ track, activeHover }) {
       </div>
 
       {/* Dynamic Streaming Console Log */}
-      <div className="space-y-2 flex-1 flex flex-col min-h-0 justify-end">
+      <div className="hidden md:flex space-y-2 flex-1 flex-col min-h-0 justify-end">
         <span className="text-neutral-600 block border-b border-neutral-900 pb-1">
-          // Activity Log
+          {"// Activity Log"}
         </span>
         <div
           ref={logContainerRef}
