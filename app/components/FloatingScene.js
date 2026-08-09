@@ -6,7 +6,7 @@ import { Environment } from "@react-three/drei";
 import FloatingGallery from "./FloatingGallery";
 import FluidShader from "./FluidShader";
 
-export default function FloatingScene({ activeProject, setActiveProject, inProjectView }) {
+export default function FloatingScene({ activeProject, setActiveProject, inProjectView, groupOffsetX = 0 }) {
   return (
     <div className="fixed inset-0 w-full h-screen z-10 pointer-events-auto">
       <Canvas gl={{ alpha: true, antialias: true }} camera={{ position: [0, 0, 8], fov: 45 }}>
@@ -18,7 +18,7 @@ export default function FloatingScene({ activeProject, setActiveProject, inProje
         <directionalLight position={[10, 10, 5]} intensity={1.5} />
         
         <Suspense fallback={null}>
-          <FloatingGallery activeProject={activeProject} setActiveProject={setActiveProject} inProjectView={inProjectView} />
+          <FloatingGallery activeProject={activeProject} setActiveProject={setActiveProject} inProjectView={inProjectView} groupOffsetX={groupOffsetX} />
         </Suspense>
         
         <Environment preset="city" />
