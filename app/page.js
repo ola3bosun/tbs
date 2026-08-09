@@ -31,10 +31,11 @@ export default function Home() {
   const textRef2 = useRef(null);
   const textRef3 = useRef(null);
 
-  // Poll Spotify Status
+  // Poll Spotify Status (with Visibility API optimization)
   useEffect(() => {
     let isMounted = true;
     async function updateTrack() {
+      if (document.hidden) return; // Pause polling when tab is inactive
       try {
         const res = await fetch("/api/spotify");
         if (!res.ok) return;
@@ -46,7 +47,15 @@ export default function Home() {
     }
     updateTrack();
     const interval = setInterval(updateTrack, 5000);
-    return () => { isMounted = false; clearInterval(interval); };
+    const handleVisibilityChange = () => {
+      if (!document.hidden) updateTrack();
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, []);
 
   // Kinetic Typography Mouse Tracking
@@ -96,8 +105,8 @@ export default function Home() {
       }} />}
 
       {/* BACKGROUND TEXT (Z-0) */}
-      <div className="fixed bottom-0 left-0 w-full z-0 flex justify-center items-end pointer-events-none pb-0 overflow-hidden">
-        <h1 className="text-[18vw] sm:text-[20vw] font-medium tracking-[-0.05em] lowercase leading-[0.75] font-sans text-[#393E46] whitespace-nowrap opacity-50 select-none flex items-center justify-center">
+      <div className="fixed bottom-0 left-0 w-full z-0 flex justify-center items-end pointer-events-none pb-0 overflow-hidden" aria-hidden="true">
+        <div className="text-[18vw] sm:text-[20vw] font-medium tracking-[-0.05em] lowercase leading-[0.75] font-sans text-[#393E46] whitespace-nowrap opacity-50 select-none flex items-center justify-center">
           <span ref={textRef1} className="inline-block mr-[-0.04em]">olatub</span>
           <span
             ref={textRef2}
@@ -110,7 +119,7 @@ export default function Home() {
             O
           </span>
           <span ref={textRef3} className="inline-block ml-[-0.08em]">sun</span>
-        </h1>
+        </div>
       </div>
 
       {/* 3D FLOATING GALLERY (Z-10) */}
@@ -122,47 +131,68 @@ export default function Home() {
             setInProjectView(true);
           }
         }} 
-        inProjectView={inProjectView} 
+        inProjectView={inProjectView}
+        groupOffsetX={2.8}
       />
 
       {/* FOREGROUND UI (Z-20) */}
-      <div className="fixed inset-0 pointer-events-none z-20 flex flex-col justify-between p-6 sm:p-12">
+      <div className="fixed inset-0 pointer-events-none z-20 p-6 sm:p-12">
 
-        <div className="flex justify-between items-start w-full pointer-events-auto">
-
-          <nav className="space-y-3">
+        {/* TOP LEFT — h1 + socials */}
+        <div className="absolute top-6 left-6 sm:top-12 sm:left-12 pointer-events-auto flex flex-col gap-5">
+          <nav className="space-y-3" aria-label="Social links">
             <span className="block text-[9px] uppercase tracking-widest text-neutral-500 font-mono">
               {"// SOCIALS"}
             </span>
-            <div className="flex gap-2">
-              <a href="#" className="group" onMouseEnter={() => setActiveHover("Social: X")} onMouseLeave={() => setActiveHover(null)}>
-                <h3 className="text-sm font-medium text-[#ecdfcc]">X,</h3>
+            <div className="flex gap-2 items-center">
+              <a 
+                href="https://x.com/ola2bosun__" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="group focus:outline-none focus:ring-1 focus:ring-[#ecdfcc]" 
+                onMouseEnter={() => setActiveHover("Social: X")} 
+                onMouseLeave={() => setActiveHover(null)}
+              >
+                <span className="text-sm font-medium text-[#ecdfcc] group-hover:text-white transition-colors">X,</span>
               </a>
-              <a href="#" className="group" onMouseEnter={() => setActiveHover("Social: IG")} onMouseLeave={() => setActiveHover(null)}>
-                <h3 className="text-sm font-medium text-[#ecdfcc]">IG,</h3>
+              <a 
+                href="https://github.com/ola3bosun" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="group focus:outline-none focus:ring-1 focus:ring-[#ecdfcc]" 
+                onMouseEnter={() => setActiveHover("Social: GH")} 
+                onMouseLeave={() => setActiveHover(null)}
+              >
+                <span className="text-sm font-medium text-[#ecdfcc] group-hover:text-white transition-colors">GH,</span>
               </a>
-              <a href="#" className="group" onMouseEnter={() => setActiveHover("Social: GH")} onMouseLeave={() => setActiveHover(null)}>
-                <h3 className="text-sm font-medium text-[#ecdfcc]">GH</h3>
+              <a 
+                href="https://instagram.com/ola2bosun_" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="group focus:outline-none focus:ring-1 focus:ring-[#ecdfcc]" 
+                onMouseEnter={() => setActiveHover("Social: IG")} 
+                onMouseLeave={() => setActiveHover(null)}
+              >
+                <span className="text-sm font-medium text-[#ecdfcc] group-hover:text-white transition-colors">IG</span>
               </a>
             </div>
-
-            <SystemMatrix track={track} activeHover={activeHover} />
           </nav>
 
-          <SpotifyWidget track={track} />
+          <main>
+            <h1 className="font-mono text-sm text-[#ecdfcc] mix-blend-difference leading-loose">
+              Frontend developer crafting immersive digital experiences <br /> through motion, typography, and thoughtful engineering.
+            </h1>
+          </main>
 
+          <SystemMatrix track={track} activeHover={activeHover} />
         </div>
 
-        <main className="absolute bottom-6 left-6 sm:bottom-12 sm:left-12 max-w-xs pointer-events-auto">
-          <p className="font-mono text-sm text-[#ecdfcc] mix-blend-difference mb-8">
-            Frontend developer crafting immersive digital experiences through motion, typography, and thoughtful engineering.
-          </p>
-          
-        </main>
-      </div>
+        {/* TOP CENTER — Spotify widget */}
+        <div className="absolute top-6 sm:top-12 left-1/2 -translate-x-1/2 pointer-events-auto">
+          <SpotifyWidget track={track} />
+        </div>
 
-      {/* THE SCROLL TRACK */}
-      <div ref={scrollTrackRef} className="relative w-full h-[500vh] z-30 opacity-0 pointer-events-none" />
+      </div>
 
     </SmoothScroll>
   );
