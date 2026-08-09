@@ -3,6 +3,17 @@
 @theme {
     --font-expressive-script: var(--font-expressive-script), cursive;
     --font-sans: var(--font-sans), sans-serif;
+    --color-onyx: #0a0a0a;
+    --color-sand-light: #ecdfcc;
+    --color-sand-bone: #f4efe9;
+}
+
+:root {
+    --bg-main: #0a0a0a;
+    --text-primary: #f4efe9;
+    --text-secondary: #ecdfcc;
+    --text-muted: #737373;
+    --border-subtle: rgba(255, 255, 255, 0.1);
 }
 
 a,

@@ -19,13 +19,23 @@ export default function ProjectDetails({ project, onClose }) {
       });
       
       gsap.to(containerRef.current, {
-        backgroundColor: "rgba(10, 11, 10, 0.8)", // Semi-transparent black to tint the shattered mesh behind it
+        backgroundColor: "rgba(10, 11, 10, 0.85)",
         duration: 1,
         delay: 0.5,
       });
     }, containerRef);
 
-    return () => ctx.revert();
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        handleClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      ctx.revert();
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
   const handleClose = () => {
@@ -48,11 +58,14 @@ export default function ProjectDetails({ project, onClose }) {
   return (
     <div 
       ref={containerRef}
-      className="fixed inset-0 z-40 flex items-center justify-center pointer-events-auto overflow-y-auto"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-project-title"
+      className="fixed inset-0 z-40 flex items-center justify-center pointer-events-auto overflow-y-auto backdrop-blur-md transition-all"
       style={{ backgroundColor: "rgba(10, 11, 10, 0)" }}
     >
       {/* Background click to close */}
-      <div className="absolute inset-0" onClick={handleClose} />
+      <div className="absolute inset-0" onClick={handleClose} aria-hidden="true" />
 
       <div 
         ref={contentRef}
@@ -60,7 +73,8 @@ export default function ProjectDetails({ project, onClose }) {
       >
         <button 
           onClick={handleClose}
-          className="absolute top-12 right-12 text-[10px] uppercase tracking-widest text-neutral-400 hover:text-white border border-neutral-800 px-4 py-2 transition-colors cursor-pointer"
+          aria-label="Close case study details"
+          className="absolute top-12 right-12 text-[10px] uppercase tracking-widest text-neutral-400 hover:text-white border border-neutral-800 hover:border-neutral-600 px-4 py-2 transition-colors cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#ecdfcc]"
         >
           Close [X]
         </button>
@@ -69,9 +83,9 @@ export default function ProjectDetails({ project, onClose }) {
           Case Study // {project.id}
         </p>
         
-        <h1 className="text-5xl sm:text-7xl font-medium tracking-tighter text-[#f4efe9] leading-none uppercase mb-8">
+        <h2 id="modal-project-title" className="text-5xl sm:text-7xl font-medium tracking-tighter text-[#f4efe9] leading-none uppercase mb-8">
           {project.title}
-        </h1>
+        </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 border-t border-neutral-800 pt-8 mt-12">
           <div className="col-span-1 space-y-8">

@@ -1,4 +1,3 @@
-// app/layout.js
 import { Instrument_Sans, Mr_Bedfort } from "next/font/google";
 import "./globals.css";
 
@@ -15,8 +14,57 @@ const expressiveScript = Mr_Bedfort({
 });
 
 export const metadata = {
-  title: "Tubosun // Portfolio",
-  description: "Frontend Developer Minimalist Digital Workspace",
+  metadataBase: new URL("https://tbs.dev"),
+  title: {
+    default: "'Tubosun",
+    template: "%s // Olatubosun",
+  },
+  description:
+    "Frontend developer crafting immersive digital experiences through motion, typography, 3D WebGL, and thoughtful engineering.",
+  keywords: [
+    "Olatubosun",
+    "Frontend Developer",
+    "WebGL Engineer",
+    "Three.js",
+    "React",
+    "Next.js",
+    "Creative Technologist",
+    "Motion Design",
+  ],
+  authors: [{ name: "Olatubosun" }],
+  creator: "Olatubosun",
+  openGraph: {
+    title: "'Tubosun",
+    description:
+      "Frontend developer crafting immersive digital experiences through motion, typography and sleek animations.",
+    url: "https://tbs.dev",
+    siteName: "'Tubosun Portfolio",
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "'Tubosun // Frontend Developer",
+    description:
+      "Frontend developer crafting immersive digital experiences through motion, typography and creative coding.",
+    creator: "@ola2bosun",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+};
+
+export const viewport = {
+  themeColor: "#0a0a0a",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({ children }) {
@@ -25,7 +73,9 @@ export default function RootLayout({ children }) {
       lang="en"
       className={`${sansFont.variable} ${expressiveScript.variable} bg-[#0a0a0a]`}
     >
-      <body className="antialiased">{children}</body>
+      <body className="antialiased bg-[#0a0a0a] text-[#f4efe9] selection:bg-[#ecdfcc] selection:text-[#0a0a0a]">
+        {children}
+      </body>
     </html>
   );
 }
