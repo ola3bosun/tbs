@@ -56,13 +56,19 @@ function useTextScramble(target, deps) {
 
 export default function SpotifyWidget({ track = { isPlaying: false } }) {
 
-  const targetText = track.isPlaying
-    ? `[ ${track.title} — ${track.artist} // ${track.album} ]`
-    : null;
-
-  const { output: displayText, isScrambling } = useTextScramble(
-    targetText,
+  const { output: titleText, isScrambling } = useTextScramble(
+    track.isPlaying ? track.title : null,
     [track.title, track.isPlaying]
+  );
+  
+  const { output: artistText } = useTextScramble(
+    track.isPlaying ? track.artist : null,
+    [track.artist, track.isPlaying]
+  );
+  
+  const { output: albumText } = useTextScramble(
+    track.isPlaying ? track.album : null,
+    [track.album, track.isPlaying]
   );
 
   return (
@@ -81,7 +87,12 @@ export default function SpotifyWidget({ track = { isPlaying: false } }) {
 
           <p className="text-[10px] sm:text-xs font-medium text-white group-hover:text-neutral-300 transition-colors whitespace-nowrap">
             {isScrambling ? (
-              <span className="font-mono tracking-wide">{displayText}</span>
+              <span className="font-mono">
+                [ {titleText}{" "}
+                <span className="hidden sm:inline text-neutral-500">— {artistText} </span>
+                <span className="hidden sm:inline">{" // "} {albumText}</span>
+                {" "}]
+              </span>
             ) : (
               <>
                 [ {track.title}{" "}
