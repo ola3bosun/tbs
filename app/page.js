@@ -10,6 +10,7 @@ import ProjectOverlay from "./components/ProjectOverlay";
 import CinematicLoader from "./components/CinematicLoader";
 import SystemMatrix from "./components/SystemMatrix";
 import ProjectDetails from "./components/ProjectDetails";
+import SplashCursor from "./components/SplashCursor";
 
 // import IsolatedFooter from "./components/IsolatedFooter"; 
 
@@ -26,23 +27,21 @@ export default function Home() {
   const scrollTrackRef = useRef(null);
   const scrollProxy = useRef(0);
 
-  // Kinetic Typography Refs
+  // Typography Refs
   const textRef1 = useRef(null);
   const textRef2 = useRef(null);
   const textRef3 = useRef(null);
 
-  // Poll Spotify Status (with Visibility API optimization)
   useEffect(() => {
     let isMounted = true;
     async function updateTrack() {
-      if (document.hidden) return; // Pause polling when tab is inactive
+      if (document.hidden) return;
       try {
         const res = await fetch("/api/spotify");
         if (!res.ok) return;
         const data = await res.json();
         if (isMounted) setTrack(data);
       } catch (error) {
-        // Silent catch
       }
     }
     updateTrack();
@@ -58,21 +57,29 @@ export default function Home() {
     };
   }, []);
 
-  // Kinetic Typography Mouse Tracking
+  // Typography Mouse Tracking
   useEffect(() => {
-    if (inProjectView) return; // Freeze text if in project view
+    if (inProjectView) return;
 
+    let requestRef;
     const handleMouseMove = (e) => {
-      const x = (e.clientX / window.innerWidth) * 2 - 1;
-      const y = (e.clientY / window.innerHeight) * 2 - 1;
+      if (requestRef) cancelAnimationFrame(requestRef);
+      
+      requestRef = requestAnimationFrame(() => {
+        const x = (e.clientX / window.innerWidth) * 2 - 1;
+        const y = (e.clientY / window.innerHeight) * 2 - 1;
 
-      // gsap.to(textRef1.current, { x: x * -15, y: y * -5, skewX: x * 5, duration: 0.5, ease: "power2.out" });
-      gsap.to(textRef2.current, { x: x * 25, y: y * 15, skewX: x * -10, rotation: x * 5, duration: 0.8, ease: "power2.out" });
-      // gsap.to(textRef3.current, { x: x * -10, y: y * -5, skewX: x * 3, duration: 0.6, ease: "power2.out" });
+        // gsap.to(textRef1.current, { x: x * -15, y: y * -5, skewX: x * 5, duration: 0.5, ease: "power2.out", overwrite: "auto" });
+        // gsap.to(textRef2.current, { x: x * 25, y: y * 15, skewX: x * -10, rotation: x * 5, duration: 0.8, ease: "power2.out", overwrite: "auto" });
+        // gsap.to(textRef3.current, { x: x * -10, y: y * -5, skewX: x * 3, duration: 0.6, ease: "power2.out", overwrite: "auto" });
+      });
     };
 
     window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      if (requestRef) cancelAnimationFrame(requestRef);
+    };
   }, [inProjectView]);
 
   useEffect(() => {
@@ -95,6 +102,18 @@ export default function Home() {
 
   return (
     <SmoothScroll>
+      <SplashCursor
+        SIM_RESOLUTION={64}
+        DYE_RESOLUTION={512}
+        DENSITY_DISSIPATION={10}
+        VELOCITY_DISSIPATION={1.5}
+        PRESSURE={0.4}
+        CURL={1}
+        COLOR_UPDATE_SPEED={10}
+        SHADING={false}
+        RAINBOW_MODE={false}
+        COLOR="#ecdfcc"
+      />
       {/* PRELOADER */}
       {!loaderFinished && <CinematicLoader onComplete={() => setLoaderFinished(true)} />}
 
@@ -105,8 +124,8 @@ export default function Home() {
       }} />}
 
       {/* BACKGROUND TEXT (Z-0) */}
-      <div className="fixed bottom-0 left-0 w-full z-0 flex justify-center items-end pointer-events-none pb-0 overflow-hidden" aria-hidden="true">
-        <div className="text-[18vw] sm:text-[20vw] font-medium tracking-[-0.05em] lowercase leading-[0.75] font-sans text-[#393E46] whitespace-nowrap opacity-50 select-none flex items-center justify-center">
+      <div className="fixed bottom-[-3vw] left-0 w-full z-0 flex justify-center items-end pointer-events-none overflow-hidden" aria-hidden="true">
+        <div className="text-[26vw] sm:text-[23vw] font-medium tracking-tight lowercase leading-[0.6] font-sans text-[#393E46] whitespace-nowrap opacity-50 select-none flex items-center justify-center translate-y-[15%]">
           <span ref={textRef1} className="inline-block mr-[-0.04em]">olatub</span>
           <span
             ref={textRef2}
