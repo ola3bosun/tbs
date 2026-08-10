@@ -22,6 +22,7 @@ export default function Home() {
   const [activeHover, setActiveHover] = useState(null);
   const [track, setTrack] = useState({ isPlaying: false });
   const [inProjectView, setInProjectView] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const [activeProject, setActiveProject] = useState(null);
   const scrollTrackRef = useRef(null);
@@ -31,6 +32,13 @@ export default function Home() {
   const textRef1 = useRef(null);
   const textRef2 = useRef(null);
   const textRef3 = useRef(null);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -151,7 +159,7 @@ export default function Home() {
           }
         }} 
         inProjectView={inProjectView}
-        groupOffsetX={2.8}
+        groupOffsetX={isMobile ? 0 : 2.8}
       />
 
       {/* FOREGROUND UI (Z-20) */}
