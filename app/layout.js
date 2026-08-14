@@ -1,5 +1,6 @@
 import { Instrument_Sans, Mr_Bedfort } from "next/font/google";
 import "./globals.css";
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 const sansFont = Instrument_Sans({
   subsets: ["latin"],
@@ -15,8 +16,11 @@ const expressiveScript = Mr_Bedfort({
 
 export const metadata = {
   metadataBase: new URL("https://tbs.dev"),
+  alternates: {
+    canonical: "/",
+  },
   title: {
-    default: "'Tubosun",
+    default: "'Tubosun // Frontend Developer",
     template: "%s // Olatubosun",
   },
   description:
@@ -34,13 +38,21 @@ export const metadata = {
   authors: [{ name: "Olatubosun" }],
   creator: "Olatubosun",
   openGraph: {
-    title: "'Tubosun",
+    title: "'Tubosun // Frontend Developer",
     description:
       "Frontend developer crafting immersive digital experiences through motion, typography and sleek animations.",
     url: "https://tbs.dev",
     siteName: "'Tubosun Portfolio",
     locale: "en_US",
     type: "website",
+    images: [
+      {
+        url: "/og-image.jpg", // Ensure this image exists in public folder
+        width: 1200,
+        height: 630,
+        alt: "'Tubosun Portfolio Preview",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
@@ -48,6 +60,10 @@ export const metadata = {
     description:
       "Frontend developer crafting immersive digital experiences through motion, typography and creative coding.",
     creator: "@ola2bosun",
+    images: ["/og-image.jpg"], // Ensure this image exists in public folder
+  },
+  verification: {
+    google: "your-google-verification-code", // Replace with actual GSC ID
   },
   robots: {
     index: true,
@@ -76,6 +92,9 @@ export default function RootLayout({ children }) {
       <body className="antialiased bg-[#0a0a0a] text-[#f4efe9] selection:bg-[#ecdfcc] selection:text-[#0a0a0a]">
         {children}
       </body>
+      {process.env.NEXT_PUBLIC_GA_ID && (
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+      )}
     </html>
   );
 }
