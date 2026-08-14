@@ -47,7 +47,7 @@ export const metadata = {
     type: "website",
     images: [
       {
-        url: "/og-image.jpg", // Ensure this image exists in public folder
+        url: "/og-image.jpg", // ...
         width: 1200,
         height: 630,
         alt: "'Tubosun Portfolio Preview",
@@ -60,10 +60,10 @@ export const metadata = {
     description:
       "Frontend developer crafting immersive digital experiences through motion, typography and creative coding.",
     creator: "@ola2bosun",
-    images: ["/og-image.jpg"], // Ensure this image exists in public folder
+    images: ["/og-image.jpg"], // ...
   },
   verification: {
-    google: "your-google-verification-code", // Replace with actual GSC ID
+    google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION_ID,
   },
   robots: {
     index: true,
