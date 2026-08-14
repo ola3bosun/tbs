@@ -72,7 +72,7 @@ export default function Home() {
     let requestRef;
     const handleMouseMove = (e) => {
       if (requestRef) cancelAnimationFrame(requestRef);
-      
+
       requestRef = requestAnimationFrame(() => {
         const x = (e.clientX / window.innerWidth) * 2 - 1;
         const y = (e.clientY / window.innerHeight) * 2 - 1;
@@ -150,17 +150,28 @@ export default function Home() {
       </div>
 
       {/* 3D FLOATING GALLERY (Z-10) */}
-      <FloatingScene 
-        activeProject={activeProject}
-        setActiveProject={(project) => {
-          setActiveProject(project);
-          if (project) {
-            setInProjectView(true);
-          }
-        }} 
-        inProjectView={inProjectView}
-        groupOffsetX={isMobile ? 0 : 2.8}
-      />
+      <section aria-label="Interactive 3D Project Gallery">
+        <h2 className="sr-only">Selected Works & 3D Interactive Gallery</h2>
+        {/* Hidden Fallback Links for SEO Crawlers */}
+        <noscript>
+          <ul>
+            <li><a href="#projects">View Projects</a></li>
+            <li><a href="#about">About Me</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </noscript>
+        <FloatingScene
+          activeProject={activeProject}
+          setActiveProject={(project) => {
+            setActiveProject(project);
+            if (project) {
+              setInProjectView(true);
+            }
+          }}
+          inProjectView={inProjectView}
+          groupOffsetX={isMobile ? 0 : 2.8}
+        />
+      </section>
 
       {/* FOREGROUND UI (Z-20) */}
       <div className="fixed inset-0 pointer-events-none z-20 p-6 sm:p-12">
@@ -172,32 +183,32 @@ export default function Home() {
               {"// SOCIALS"}
             </span>
             <div className="flex gap-2 items-center">
-              <a 
-                href="https://x.com/ola2bosun__" 
-                target="_blank" 
+              <a
+                href="https://x.com/ola2bosun__"
+                target="_blank"
                 rel="noopener noreferrer"
-                className="group focus:outline-none focus:ring-1 focus:ring-[#ecdfcc]" 
-                onMouseEnter={() => setActiveHover("Social: X")} 
+                className="group focus:outline-none focus:ring-1 focus:ring-[#ecdfcc]"
+                onMouseEnter={() => setActiveHover("Social: X")}
                 onMouseLeave={() => setActiveHover(null)}
               >
                 <span className="text-sm font-medium text-[#ecdfcc] group-hover:text-white transition-colors">X,</span>
               </a>
-              <a 
-                href="https://github.com/ola3bosun" 
-                target="_blank" 
+              <a
+                href="https://github.com/ola3bosun"
+                target="_blank"
                 rel="noopener noreferrer"
-                className="group focus:outline-none focus:ring-1 focus:ring-[#ecdfcc]" 
-                onMouseEnter={() => setActiveHover("Social: GH")} 
+                className="group focus:outline-none focus:ring-1 focus:ring-[#ecdfcc]"
+                onMouseEnter={() => setActiveHover("Social: GH")}
                 onMouseLeave={() => setActiveHover(null)}
               >
                 <span className="text-sm font-medium text-[#ecdfcc] group-hover:text-white transition-colors">GH,</span>
               </a>
-              <a 
-                href="https://instagram.com/ola2bosun_" 
-                target="_blank" 
+              <a
+                href="https://instagram.com/ola2bosun_"
+                target="_blank"
                 rel="noopener noreferrer"
-                className="group focus:outline-none focus:ring-1 focus:ring-[#ecdfcc]" 
-                onMouseEnter={() => setActiveHover("Social: IG")} 
+                className="group focus:outline-none focus:ring-1 focus:ring-[#ecdfcc]"
+                onMouseEnter={() => setActiveHover("Social: IG")}
                 onMouseLeave={() => setActiveHover(null)}
               >
                 <span className="text-sm font-medium text-[#ecdfcc] group-hover:text-white transition-colors">IG</span>
