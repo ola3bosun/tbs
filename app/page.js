@@ -10,7 +10,8 @@ import ProjectOverlay from "./components/ProjectOverlay";
 import CinematicLoader from "./components/CinematicLoader";
 import SystemMatrix from "./components/SystemMatrix";
 import ProjectDetails from "./components/ProjectDetails";
-import SplashCursor from "./components/SplashCursor";
+// import SplashCursor from "./components/SplashCursor";
+import CustomCursor from "./components/CustomCursor";
 
 // import IsolatedFooter from "./components/IsolatedFooter"; 
 
@@ -110,7 +111,7 @@ export default function Home() {
 
   return (
     <SmoothScroll>
-      <SplashCursor
+      {/* <SplashCursor
         SIM_RESOLUTION={64}
         DYE_RESOLUTION={512}
         DENSITY_DISSIPATION={10}
@@ -121,7 +122,8 @@ export default function Home() {
         SHADING={false}
         RAINBOW_MODE={false}
         COLOR="#ecdfcc"
-      />
+      /> */}
+      <CustomCursor isHovered={!!activeHover} />
       {/* PRELOADER */}
       {!loaderFinished && <CinematicLoader onComplete={() => setLoaderFinished(true)} />}
 
@@ -174,7 +176,7 @@ export default function Home() {
       </section>
 
       {/* FOREGROUND UI (Z-20) */}
-      <div className="fixed inset-0 pointer-events-none z-20 p-6 sm:p-12">
+      <div className={`fixed inset-0 pointer-events-none z-20 p-6 sm:p-12 transition-opacity duration-700 ease-in-out ${inProjectView ? 'opacity-0' : 'opacity-100'}`}>
 
         {/* TOP LEFT — h1 + socials */}
         <div className="absolute top-6 left-6 sm:top-12 sm:left-12 pointer-events-auto flex flex-col gap-5">
