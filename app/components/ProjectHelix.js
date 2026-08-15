@@ -91,7 +91,7 @@ export default function ProjectHelix() {
             >
               <div
                 ref={(el) => { cards.current[i] = el; }}
-                className="absolute top-0 left-0 w-[80vw] md:w-[45vw] lg:w-[35vw] aspect-video bg-[#111] border border-neutral-800 p-2 flex flex-col justify-between group hover:border-neutral-500 transition-colors duration-500 cursor-pointer"
+                className="absolute top-0 left-0 w-[80vw] md:w-[45vw] lg:w-[35vw] aspect-video bg-[#111] border border-neutral-800 p-2 flex flex-col justify-between group hover:border-neutral-500 transition-colors duration-500 cursor-none"
                 style={{ backfaceVisibility: "hidden" }}
               >
                 <div className="relative w-full h-[80%] bg-[#050505] overflow-hidden grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700">
