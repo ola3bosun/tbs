@@ -87,9 +87,9 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
-      className={`${sansFont.variable} ${expressiveScript.variable} bg-[#0a0a0a]`}
+      className={`${sansFont.variable} ${expressiveScript.variable} bg-[#0a0a0a] cursor-none`}
     >
-      <body className="antialiased bg-[#0a0a0a] text-[#f4efe9] selection:bg-[#ecdfcc] selection:text-[#0a0a0a]">
+      <body className="antialiased bg-[#0a0a0a] text-[#f4efe9] selection:bg-[#ecdfcc] selection:text-[#0a0a0a] cursor-none">
         {children}
       </body>
       {process.env.NEXT_PUBLIC_GA_ID && (
