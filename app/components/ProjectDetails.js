@@ -1,28 +1,39 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
+import { useScrambleText } from "../hooks/useScrambleText";
 
 export default function ProjectDetails({ project, onClose }) {
   const containerRef = useRef(null);
-  const contentRef = useRef(null);
+  const uiRef = useRef(null);
+  
+  const [scrambleTrigger, setScrambleTrigger] = useState(false);
+
+  // Scramble hooks
+  const scrambledRole = useScrambleText(project ? `${project.role} (${project.year || project.sector})` : "", { duration: 1000, delay: 0, trigger: scrambleTrigger });
 
   useEffect(() => {
-    // Fade in timeline
+    // Reveal Timeline
     const ctx = gsap.context(() => {
-      gsap.from(contentRef.current, {
-        y: 50,
+      // 1. Fade in the UI container
+      gsap.from(uiRef.current, {
         opacity: 0,
         duration: 1,
-        ease: "power4.out",
-        delay: 0.5, // Wait for camera to fly in
+        ease: "power2.out",
+        delay: 0.5, // Wait for 3D camera to zoom
       });
       
+      // 2. Subtle background overlay
       gsap.to(containerRef.current, {
-        backgroundColor: "rgba(10, 11, 10, 0.85)",
+        backgroundColor: "rgba(10, 11, 10, 0.4)", // Darken slightly for contrast
         duration: 1,
-        delay: 0.5,
+        delay: 0.3,
       });
+
+      // 3. Trigger Scramble
+      setTimeout(() => setScrambleTrigger(true), 600);
+
     }, containerRef);
 
     const handleKeyDown = (e) => {
@@ -36,21 +47,21 @@ export default function ProjectDetails({ project, onClose }) {
       ctx.revert();
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [project]);
 
   const handleClose = () => {
-    // Animate out before closing
-    gsap.to(contentRef.current, {
-      y: 30,
+    const tl = gsap.timeline({ onComplete: onClose });
+    
+    tl.to(uiRef.current, {
       opacity: 0,
-      duration: 0.5,
-      ease: "power3.in",
-      onComplete: onClose,
-    });
-    gsap.to(containerRef.current, {
+      duration: 0.4,
+      ease: "power2.in",
+    }, 0);
+
+    tl.to(containerRef.current, {
       backgroundColor: "rgba(10, 11, 10, 0)",
       duration: 0.5,
-    });
+    }, 0.1);
   };
 
   if (!project) return null;
@@ -61,53 +72,59 @@ export default function ProjectDetails({ project, onClose }) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-project-title"
-      className="fixed inset-0 z-40 flex items-center justify-center pointer-events-auto overflow-y-auto backdrop-blur-md transition-all"
+      className="fixed inset-0 z-40 flex items-center justify-center pointer-events-auto transition-all"
       style={{ backgroundColor: "rgba(10, 11, 10, 0)" }}
     >
       {/* Background click to close */}
-      <div className="absolute inset-0" onClick={handleClose} aria-hidden="true" />
+      <div className="absolute inset-0 z-0" onClick={handleClose} aria-hidden="true" />
 
+      {/* Edge-to-edge UI Frame */}
       <div 
-        ref={contentRef}
-        className="relative z-10 w-full max-w-4xl p-6 sm:p-12 md:p-24 min-h-screen flex flex-col justify-center"
+        ref={uiRef}
+        className="relative z-10 w-full h-full p-6 sm:p-12 pointer-events-none flex flex-col justify-between"
       >
-        <button 
-          onClick={handleClose}
-          aria-label="Close case study details"
-          className="absolute top-12 right-12 text-[10px] uppercase tracking-widest text-neutral-400 hover:text-white border border-neutral-800 hover:border-neutral-600 px-4 py-2 transition-colors cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#ecdfcc]"
-        >
-          Close [X]
-        </button>
-
-        <p className="text-[10px] uppercase tracking-widest text-neutral-500 font-mono mb-4">
-          Case Study // {project.id}
-        </p>
-        
-        <h2 id="modal-project-title" className="text-5xl sm:text-7xl font-medium tracking-tighter text-[#f4efe9] leading-none uppercase mb-8">
-          {project.title}
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 border-t border-neutral-800 pt-8 mt-12">
-          <div className="col-span-1 space-y-8">
-            <div>
-              <p className="text-[9px] uppercase tracking-widest text-neutral-500 font-mono mb-2">Role</p>
-              <p className="text-sm text-neutral-300">{project.role}</p>
-            </div>
-            <div>
-              <p className="text-[9px] uppercase tracking-widest text-neutral-500 font-mono mb-2">Sector</p>
-              <p className="text-sm text-neutral-300">{project.sector}</p>
-            </div>
-          </div>
-          
-          <div className="col-span-1 md:col-span-2">
-            <p className="text-base leading-relaxed text-neutral-400 font-serif">
-              This is a detailed case study placeholder for {project.title}. In a full implementation, this section would contain rich typography, extensive project galleries, technical teardowns of the {project.role} architecture, and detailed UX/UI breakdowns.
-            </p>
-            <br />
-            <p className="text-base leading-relaxed text-neutral-400 font-serif">
-              The tear-away WebGL transition allows us to bypass standard Next.js routing, keeping the 3D context alive and enabling a seamless, cinematic user experience.
+        {/* TOP ROW */}
+        <div className="flex justify-between items-start pointer-events-auto">
+          {/* Top Left: Description */}
+          <div className="max-w-md">
+            <p className="text-[10px] uppercase tracking-widest text-neutral-400 font-mono leading-relaxed mb-2">
+              {project.title} // {project.role} // {project.sector}
             </p>
           </div>
+
+          {/* Top Right: Close Button */}
+          <button 
+            onClick={handleClose}
+            aria-label="Close case study details"
+            className="text-[10px] uppercase tracking-widest text-neutral-400 hover:text-[#f4efe9] border border-neutral-600 hover:border-[#f4efe9] px-3 py-1.5 transition-colors cursor-none focus:outline-none focus:ring-1 focus:ring-[#ecdfcc]"
+          >
+            ESCAPE
+          </button>
+        </div>
+
+        {/* BOTTOM ROW */}
+        <div className="flex justify-between items-end pointer-events-auto">
+          {/* Bottom Left: Role (Year) & Title */}
+          <div>
+            <p className="text-[10px] sm:text-xs uppercase tracking-widest text-neutral-400 font-mono mb-2 sm:mb-4">
+              {scrambledRole}
+            </p>
+            <h2 
+              id="modal-project-title" 
+              className="text-6xl sm:text-8xl md:text-9xl font-medium tracking-tighter text-[#f4efe9] leading-none uppercase"
+            >
+              {project.title}
+            </h2>
+          </div>
+
+          {/* Bottom Right: Link */}
+          <a 
+            href="#"
+            onClick={(e) => e.preventDefault()}
+            className="text-[10px] uppercase tracking-widest text-neutral-400 hover:text-[#f4efe9] transition-colors cursor-none mb-2"
+          >
+            View Project ↗
+          </a>
         </div>
       </div>
     </div>
