@@ -10,8 +10,6 @@ export default function FloatingScene({ activeProject, setActiveProject, inProje
   return (
     <div className="fixed inset-0 w-full h-screen z-10 pointer-events-auto">
       <Canvas gl={{ alpha: true, antialias: true }} camera={{ position: [0, 0, 8], fov: 45 }}>
-        {/* GPU Fluid Simulation Layer */}
-        <FluidShader />
         
         <fog attach="fog" args={["#0a0b0a", 5, 30]} />
         <ambientLight intensity={0.5} />
