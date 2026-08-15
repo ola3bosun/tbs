@@ -83,9 +83,9 @@ export default function ProjectOverlay({ activeProject, onViewCaseStudy }) {
       <div className="overflow-hidden pt-4">
         <button
           onClick={onViewCaseStudy}
-          className="overlay-text inline-flex items-center gap-2 text-[10px] uppercase tracking-widest text-white border border-neutral-700 px-4 py-2 hover:bg-white hover:text-black transition-colors pointer-events-auto cursor-pointer"
+          className="overlay-text inline-flex items-center gap-2 text-[10px] uppercase tracking-widest text-white border border-neutral-700 px-4 py-2 hover:bg-white hover:text-black transition-colors pointer-events-auto cursor-none"
         >
-          View Case Study <span className="text-xs">↗</span>
+          View Case Study <span className="text-xs transition-rotate duration-300 hover:rotate-10">↗</span>
         </button>
       </div>
     </div>
