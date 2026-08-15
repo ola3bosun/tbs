@@ -8,18 +8,13 @@ import SlicingShaderMaterial from "./SlicingShaderMaterial";
 
 // ── Project data ────────────────────────────────────────────────────────────
 const projects = [
-  { id: "01", title: "Transcend Projects", role: "Frontend Lead",    sector: "Real Estate",    url: "/proj-1.png" },
-  { id: "02", title: "The Nuanced Studio",  role: "UI Engineer",      sector: "Design Agency",  url: "/proj-2.png" },
-  { id: "03", title: "Aproko Doctor",        role: "Creative Dev",     sector: "Health & Media", url: "/proj-3.png" },
-  { id: "04", title: "Heat Art Store",       role: "Fullstack Dev",    sector: "E-Commerce",     url: "/proj-1.png" },
-  { id: "05", title: "Trimly",               role: "Frontend Dev",     sector: "Productivity",   url: "/proj-2.png" },
-  { id: "06", title: "Transcend 2.0",        role: "WebGL Engineer",   sector: "Real Estate",    url: "/proj-3.png" },
-  // { id: "07", title: "Nuanced v2",           role: "Motion Dev",       sector: "Design Agency",  url: "/proj-1.png" },
-  // { id: "08", title: "Aproko v2",            role: "Creative Dev",     sector: "Health & Media", url: "/proj-2.png" },
-  // { id: "09", title: "HeatArt v2",           role: "Fullstack Dev",    sector: "E-Commerce",     url: "/proj-3.png" },
-  // { id: "10", title: "Trimly v2",            role: "Frontend Dev",     sector: "Productivity",   url: "/proj-1.png" },
-  // { id: "11", title: "Studio 404",           role: "UI Engineer",      sector: "Creative Studio",url: "/proj-2.png" },
-  // { id: "12", title: "Apex Digital",         role: "Frontend Lead",    sector: "Tech",           url: "/proj-3.png" },
+  { id: "01", title: "Olaoluwa Diyaolu", role: "UI Lead",    sector: "Real Estate",    year: "2026", url: "/proj-1.png" },
+  { id: "02", title: "Nuanced Studio",  role: "UI Engineer",      sector: "Design Agency",  year: "2025", url: "/proj-2.png" },
+  { id: "03", title: "Aproko Doctor",        role: "Creative Dev",     sector: "Health & Media", year: "2025", url: "/proj-3.png" },
+  { id: "04", title: "Heat Art Store",       role: "Fullstack Dev",    sector: "E-Commerce",     year: "2026", url: "/proj-1.png" },
+  { id: "05", title: "Trimly",               role: "Frontend Dev",     sector: "Artisan",   year: "2025", url: "/proj-2.png" },
+  // { id: "06", title: "Transcend 2.0",        role: "WebGL Engineer",   sector: "Real Estate",    year: "2025", url: "/proj-3.png" },
+
 ];
 
 // ── Ring geometry constants ─────────────────────────────────────────────────
@@ -151,10 +146,14 @@ const targetRot = dummy.rotation.clone();
       let targetCurve   = 0.55;
 
       if (isActive) {
-        // When active, center the card on screen (subtract groupOffsetX from world X)
-        targetPos.set(cursor.x * 0.04 - groupOffsetX, cursor.y * 0.04, 4.2);
+        // When active, completely center the card and scale it to fill the screen
+        const activeViewport = state.viewport.getCurrentViewport(state.camera, new THREE.Vector3(0, 0, 4.2));
+        const scaleX = activeViewport.width / 2.8;
+        const scaleY = activeViewport.height / 2.1;
+        
+        targetPos.set(-groupOffsetX, 0, 4.2);
         targetRot.set(0, 0, 0);
-        targetScale   = 1.4;
+        targetScale   = Math.max(scaleX, scaleY) * 1.05; // 5% buffer to guarantee no edge gaps
         targetOpacity = 1.0;
         targetCurve   = 0.0;
       } else if (inProjectView) {
@@ -215,8 +214,8 @@ const targetRot = dummy.rotation.clone();
             onPointerOut={handlePointerOut}
             onClick={(e) => handleClick(e, item)}
           >
-            {/* Portrait card: 2.0 wide × 2.8 tall */}
-            <planeGeometry args={[2.0, 2.8, 28, 28]} />
+            {/* 4:3 Landscape card: 2.8 wide × 2.1 tall */}
+            <planeGeometry args={[2.8, 2.1, 28, 28]} />
             <SlicingShaderMaterial
               ref={(el) => (materialsRef.current[i] = el)}
               imageUrl={item.url}
