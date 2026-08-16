@@ -1,39 +1,27 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useEffect, useState, useRef } from "react";
 import SmoothScroll from "./components/SmoothScroll";
 import FloatingScene from "./components/FloatingScene";
 import SpotifyWidget from "./components/SpotifyWidget";
-import ProjectOverlay from "./components/ProjectOverlay";
 import CinematicLoader from "./components/CinematicLoader";
 import SystemMatrix from "./components/SystemMatrix";
 import ProjectDetails from "./components/ProjectDetails";
-// import SplashCursor from "./components/SplashCursor";
 import CustomCursor from "./components/CustomCursor";
-
-// import IsolatedFooter from "./components/IsolatedFooter"; 
-
-gsap.registerPlugin(ScrollTrigger);
+import Magnetic from "./components/Magnetic";
+import RollingText from "./components/RollingText";
+import { projects } from "./data/projects";
 
 export default function Home() {
-  const [isLoading, setIsLoading] = useState(false);
   const [loaderFinished, setLoaderFinished] = useState(false);
   const [activeHover, setActiveHover] = useState(null);
   const [track, setTrack] = useState({ isPlaying: false });
   const [inProjectView, setInProjectView] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-
   const [activeProject, setActiveProject] = useState(null);
-  const scrollTrackRef = useRef(null);
-  const scrollProxy = useRef(0);
+  const bgTextRef = useRef(null);
 
-  // Typography Refs
-  const textRef1 = useRef(null);
-  const textRef2 = useRef(null);
-  const textRef3 = useRef(null);
-
+  // Detect mobile screen size on mount and window resize
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     handleResize();
@@ -41,8 +29,10 @@ export default function Home() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Poll Spotify endpoint every 5 seconds when tab is active
   useEffect(() => {
     let isMounted = true;
+
     async function updateTrack() {
       if (document.hidden) return;
       try {
@@ -51,14 +41,19 @@ export default function Home() {
         const data = await res.json();
         if (isMounted) setTrack(data);
       } catch (error) {
+        // Silently catch network errors during offline / disconnected states
       }
     }
+
     updateTrack();
     const interval = setInterval(updateTrack, 5000);
+
     const handleVisibilityChange = () => {
       if (!document.hidden) updateTrack();
     };
+
     document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
       isMounted = false;
       clearInterval(interval);
@@ -66,95 +61,99 @@ export default function Home() {
     };
   }, []);
 
-  // Typography Mouse Tracking
+  // Subtle, smooth ambient parallax on the entire background name
   useEffect(() => {
     if (inProjectView) return;
 
-    let requestRef;
+    let targetX = 0;
+    let targetY = 0;
+    let currentX = 0;
+    let currentY = 0;
+    let frameId = null;
+
     const handleMouseMove = (e) => {
-      if (requestRef) cancelAnimationFrame(requestRef);
-
-      requestRef = requestAnimationFrame(() => {
-        const x = (e.clientX / window.innerWidth) * 2 - 1;
-        const y = (e.clientY / window.innerHeight) * 2 - 1;
-
-        // gsap.to(textRef1.current, { x: x * -15, y: y * -5, skewX: x * 5, duration: 0.5, ease: "power2.out", overwrite: "auto" });
-        // gsap.to(textRef2.current, { x: x * 25, y: y * 15, skewX: x * -10, rotation: x * 5, duration: 0.8, ease: "power2.out", overwrite: "auto" });
-        // gsap.to(textRef3.current, { x: x * -10, y: y * -5, skewX: x * 3, duration: 0.6, ease: "power2.out", overwrite: "auto" });
-      });
+      const px = (e.clientX / window.innerWidth) * 2 - 1;
+      const py = (e.clientY / window.innerHeight) * 2 - 1;
+      // Gentle, subtle drift for the full background name
+      targetX = px * 1.5;
+      targetY = py * 1.5;
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
+    const updateParallax = () => {
+      currentX += (targetX - currentX) * 0.04;
+      currentY += (targetY - currentY) * 0.04;
+
+      if (bgTextRef.current) {
+        bgTextRef.current.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+      }
+
+      frameId = requestAnimationFrame(updateParallax);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    frameId = requestAnimationFrame(updateParallax);
+
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
-      if (requestRef) cancelAnimationFrame(requestRef);
+      if (frameId) cancelAnimationFrame(frameId);
     };
   }, [inProjectView]);
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-
-      gsap.to(scrollProxy, {
-        current: 1,
-        ease: "none",
-        scrollTrigger: {
-          trigger: scrollTrackRef.current,
-          start: "top top",
-          end: "bottom bottom",
-          scrub: 1.2,
-        },
-      });
-    });
-
-    return () => ctx.revert();
-  }, []);
-
   return (
     <SmoothScroll>
-      {/* <SplashCursor
-        SIM_RESOLUTION={64}
-        DYE_RESOLUTION={512}
-        DENSITY_DISSIPATION={10}
-        VELOCITY_DISSIPATION={1.5}
-        PRESSURE={0.4}
-        CURL={1}
-        COLOR_UPDATE_SPEED={10}
-        SHADING={false}
-        RAINBOW_MODE={false}
-        COLOR="#ecdfcc"
-      /> */}
+      {/* Custom hardware-accelerated cursor */}
       <CustomCursor isHovered={!!activeHover} />
-      {/* PRELOADER */}
-      {!loaderFinished && <CinematicLoader onComplete={() => setLoaderFinished(true)} />}
 
-      {inProjectView && <ProjectDetails project={activeProject} onClose={() => {
-        setInProjectView(false);
-        setActiveProject(null);
-        window.dispatchEvent(new Event('closeProjectDetails'));
-      }} />}
+      {/* Cinematic boot loader */}
+      {!loaderFinished && (
+        <CinematicLoader onComplete={() => setLoaderFinished(true)} />
+      )}
 
-      {/* BACKGROUND TEXT (Z-0) */}
-      <div className="fixed bottom-[-3vw] left-0 w-full z-0 flex justify-center items-end pointer-events-none overflow-hidden" aria-hidden="true">
-        <div className="text-[26vw] sm:text-[23vw] font-medium tracking-tight lowercase leading-[0.6] font-sans text-[#393E46] whitespace-nowrap opacity-50 select-none flex items-center justify-center translate-y-[15%]">
-          <span ref={textRef1} className="inline-block mr-[-0.04em]">olatub</span>
-          <span
-            ref={textRef2}
-            className="font-expressive-script normal-case tracking-normal text-[#ecdfcc] inline-block"
-            style={{
-              lineHeight: 1,
-              transform: "translateY(0.04em)",
-            }}
+      {/* Case study detail modal with scroll navigation between projects */}
+      {inProjectView && activeProject && (
+        <ProjectDetails
+          project={activeProject}
+          projects={projects}
+          onNavigate={(nextProject) => {
+            // Only update which project is shown — never close the view during navigation
+            setActiveProject(nextProject);
+          }}
+          onClose={() => {
+            setInProjectView(false);
+            setActiveProject(null);
+            window.dispatchEvent(new Event("closeProjectDetails"));
+          }}
+        />
+      )}
+
+      {/* Background typography branding layer */}
+      <div
+        className="fixed bottom-[-3vw] left-0 w-full z-0 flex justify-center items-end pointer-events-none overflow-hidden"
+        aria-hidden="true"
+      >
+        <div className="translate-y-[15%] flex items-center justify-center">
+          <div
+            ref={bgTextRef}
+            className="text-[26vw] sm:text-[23vw] font-medium tracking-tight lowercase leading-[0.6] font-sans text-[#393E46] whitespace-nowrap opacity-50 select-none flex items-center justify-center will-change-transform"
           >
-            O
-          </span>
-          <span ref={textRef3} className="inline-block ml-[-0.08em]">sun</span>
+            <span className="inline-block mr-[-0.04em]">olatub</span>
+            <span
+              className="font-expressive-script normal-case tracking-normal text-[#ecdfcc] inline-block"
+              style={{
+                lineHeight: 1,
+                transform: "translateY(0.04em)",
+              }}
+            >
+              O
+            </span>
+            <span className="inline-block ml-[-0.08em]">sun</span>
+          </div>
         </div>
       </div>
 
-      {/* 3D FLOATING GALLERY (Z-10) */}
+      {/* Interactive 3D project gallery */}
       <section aria-label="Interactive 3D Project Gallery">
         <h2 className="sr-only">Selected Works & 3D Interactive Gallery</h2>
-        {/* Hidden Fallback Links for SEO Crawlers */}
         <noscript>
           <ul>
             <li><a href="#projects">View Projects</a></li>
@@ -175,65 +174,86 @@ export default function Home() {
         />
       </section>
 
-      {/* FOREGROUND UI (Z-20) */}
-      <div className={`fixed inset-0 pointer-events-none z-20 p-6 sm:p-12 transition-opacity duration-700 ease-in-out ${inProjectView ? 'opacity-0' : 'opacity-100'}`}>
-
-        {/* TOP LEFT — h1 + socials */}
+      {/* Foreground HUD interface */}
+      <div
+        className={`fixed inset-0 pointer-events-none z-20 p-6 sm:p-12 transition-opacity duration-700 ease-in-out ${
+          inProjectView ? "opacity-0" : "opacity-100"
+        }`}
+      >
+        {/* Top left header, navigation, and system status matrix */}
         <div className="absolute top-6 left-6 sm:top-12 sm:left-12 pointer-events-auto flex flex-col gap-5">
           <nav className="space-y-3" aria-label="Social links">
             <span className="block text-[9px] uppercase tracking-widest text-neutral-500 font-mono">
               {"// SOCIALS"}
             </span>
             <div className="flex gap-2 items-center">
-              <a
-                href="https://x.com/ola2bosun__"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group focus:outline-none focus:ring-1 focus:ring-[#ecdfcc]"
-                onMouseEnter={() => setActiveHover("Social: X")}
-                onMouseLeave={() => setActiveHover(null)}
-              >
-                <span className="text-sm font-medium text-[#ecdfcc] group-hover:text-white transition-colors">X,</span>
-              </a>
-              <a
-                href="https://github.com/ola3bosun"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group focus:outline-none focus:ring-1 focus:ring-[#ecdfcc]"
-                onMouseEnter={() => setActiveHover("Social: GH")}
-                onMouseLeave={() => setActiveHover(null)}
-              >
-                <span className="text-sm font-medium text-[#ecdfcc] group-hover:text-white transition-colors">GH,</span>
-              </a>
-              <a
-                href="https://instagram.com/ola2bosun_"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group focus:outline-none focus:ring-1 focus:ring-[#ecdfcc]"
-                onMouseEnter={() => setActiveHover("Social: IG")}
-                onMouseLeave={() => setActiveHover(null)}
-              >
-                <span className="text-sm font-medium text-[#ecdfcc] group-hover:text-white transition-colors">IG</span>
-              </a>
+              <Magnetic strength={0.35} radius={40}>
+                <a
+                  href="https://x.com/ola2bosun__"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group block px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-[#ecdfcc]"
+                  onMouseEnter={() => setActiveHover("Social: X")}
+                  onMouseLeave={() => setActiveHover(null)}
+                >
+                  <RollingText
+                    text="X,"
+                    className="text-sm font-medium text-[#ecdfcc] group-hover:text-white"
+                  />
+                </a>
+              </Magnetic>
+
+              <Magnetic strength={0.35} radius={40}>
+                <a
+                  href="https://github.com/ola3bosun"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group block px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-[#ecdfcc]"
+                  onMouseEnter={() => setActiveHover("Social: GH")}
+                  onMouseLeave={() => setActiveHover(null)}
+                >
+                  <RollingText
+                    text="GH,"
+                    className="text-sm font-medium text-[#ecdfcc] group-hover:text-white"
+                  />
+                </a>
+              </Magnetic>
+
+              <Magnetic strength={0.35} radius={40}>
+                <a
+                  href="https://instagram.com/ola2bosun_"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group block px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-[#ecdfcc]"
+                  onMouseEnter={() => setActiveHover("Social: IG")}
+                  onMouseLeave={() => setActiveHover(null)}
+                >
+                  <RollingText
+                    text="IG"
+                    className="text-sm font-medium text-[#ecdfcc] group-hover:text-white"
+                  />
+                </a>
+              </Magnetic>
             </div>
           </nav>
 
           <main>
             <h1 className="font-mono text-sm text-[#ecdfcc] mix-blend-difference leading-loose">
-              Frontend developer crafting immersive digital experiences <br /> through motion, typography, and thoughtful engineering.
+              Frontend developer crafting immersive digital experiences <br />{" "}
+              through motion, typography, and thoughtful engineering.
             </h1>
           </main>
 
           <SystemMatrix track={track} activeHover={activeHover} />
         </div>
 
-        {/* TOP CENTER — Spotify widget */}
+        {/* Top center Spotify live music status with magnetic pull */}
         <div className="absolute top-6 sm:top-12 left-1/2 -translate-x-1/2 pointer-events-auto">
-          <SpotifyWidget track={track} />
+          <Magnetic strength={0.25} radius={60}>
+            <SpotifyWidget track={track} />
+          </Magnetic>
         </div>
-
       </div>
-
     </SmoothScroll>
   );
 }
