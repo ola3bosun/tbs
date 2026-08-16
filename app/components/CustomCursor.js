@@ -1,63 +1,117 @@
 // components/CustomCursor.js
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 
 export default function CustomCursor({ isHovered }) {
-  const [position, setPosition] = useState({ x: -100, y: -100 });
-  const [isVisible, setIsVisible] = useState(false);
+  const dotRef = useRef(null);
+  const ringRef = useRef(null);
+  const containerRef = useRef(null);
+  const [isFinePointer, setIsFinePointer] = useState(false);
 
   useEffect(() => {
+    // Only show custom cursor on devices with a mouse or precision pointer
+    const mediaQuery = window.matchMedia("(pointer: fine)");
+    setIsFinePointer(mediaQuery.matches);
+
+    const handleMediaChange = (e) => setIsFinePointer(e.matches);
+    mediaQuery.addEventListener("change", handleMediaChange);
+
+    if (!mediaQuery.matches) {
+      return () => mediaQuery.removeEventListener("change", handleMediaChange);
+    }
+
+    let mouseX = -100;
+    let mouseY = -100;
+    let ringX = -100;
+    let ringY = -100;
+    let isVisible = false;
+    let animationFrameId = null;
+
     const handleMouseMove = (e) => {
-      setPosition({ x: e.clientX, y: e.clientY });
-      if (!isVisible) setIsVisible(true);
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+
+      if (!isVisible) {
+        isVisible = true;
+        ringX = mouseX;
+        ringY = mouseY;
+        if (containerRef.current) {
+          containerRef.current.style.opacity = "1";
+        }
+      }
     };
 
     const handleMouseLeave = () => {
-      setIsVisible(false);
+      isVisible = false;
+      if (containerRef.current) {
+        containerRef.current.style.opacity = "0";
+      }
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseleave', handleMouseLeave);
+    // Continuous 60fps render loop: keeps both elements strictly locked to coordinates
+    const renderLoop = () => {
+      // Smooth linear interpolation for outer orbit ring
+      ringX += (mouseX - ringX) * 0.22;
+      ringY += (mouseY - ringY) * 0.22;
+
+      // Update dot transform directly on every frame
+      if (dotRef.current) {
+        dotRef.current.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) translate(-50%, -50%)`;
+      }
+
+      // Update trailing ring transform directly on every frame
+      if (ringRef.current) {
+        ringRef.current.style.transform = `translate3d(${ringX}px, ${ringY}px, 0) translate(-50%, -50%)`;
+      }
+
+      animationFrameId = requestAnimationFrame(renderLoop);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    document.addEventListener("mouseleave", handleMouseLeave);
+    animationFrameId = requestAnimationFrame(renderLoop);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseleave', handleMouseLeave);
+      mediaQuery.removeEventListener("change", handleMediaChange);
+      window.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseleave", handleMouseLeave);
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
     };
-  }, [isVisible]);
+  }, []);
 
-  if (!isVisible) return null;
+  if (!isFinePointer) return null;
 
   return (
-    <div className="hidden md:block pointer-events-none fixed inset-0 z-50">
-      
-      {/* 1. OUTSIDE ORBIT RING - Now using GPU-accelerated translate3d for fluid damping */}
+    <div
+      ref={containerRef}
+      className="hidden md:block pointer-events-none fixed inset-0 z-50 transition-opacity duration-300 opacity-0"
+    >
+      {/* 1. Outer Orbit Ring: expands on hover */}
       <div
-        className={`absolute top-0 left-0 rounded-full border border-dashed border-[#f4efe9]/40 will-change-transform`}
+        ref={ringRef}
+        className="absolute top-0 left-0 rounded-full border border-dashed will-change-transform transition-[width,height,border-color] duration-300 ease-out"
         style={{
-          width: isHovered ? '48px' : '28px',
-          height: isHovered ? '48px' : '28px',
-          borderColor: isHovered ? 'rgba(244, 239, 233, 0.8)' : 'rgba(244, 239, 233, 0.4)',
-          // Merged the position and rotation into a single high-performance transform matrix
-          transform: `translate3d(${position.x}px, ${position.y}px, 0) translate(-50%, -50%) ${isHovered ? 'rotate(360deg)' : 'rotate(0deg)'}`,
-          transition: isHovered 
-            ? 'transform 12s linear infinite, width 0.3s ease, height 0.3s ease, border-color 0.3s ease'
-            : 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), width 0.3s ease, height 0.3s ease, border-color 0.3s ease'
+          width: isHovered ? "44px" : "26px",
+          height: isHovered ? "44px" : "26px",
+          borderColor: isHovered
+            ? "rgba(244, 239, 233, 0.85)"
+            : "rgba(244, 239, 233, 0.35)",
         }}
       />
 
-      {/* 2. CORE TARGET POINT - Instant tracking with zero-latency translate3d */}
+      {/* 2. Core Target Point: locked to exact mouse position at 60fps */}
       <div
-        className={`absolute top-0 left-0 rounded-full bg-[#f4efe9] mix-blend-difference will-change-transform
-          ${isHovered ? 'scale-[2.5]' : 'scale-100'}`}
+        ref={dotRef}
+        className="absolute top-0 left-0 rounded-full bg-[#f4efe9] mix-blend-difference will-change-transform transition-[width,height,opacity] duration-200 ease-out"
         style={{
-          width: '4px',
-          height: '4px',
-          transform: `translate3d(${position.x}px, ${position.y}px, 0) translate(-50%, -50%)`,
-          transition: 'transform 0s, opacity 0.2s ease', // Target point stays completely attached to hardware mouse
+          width: isHovered ? "5px" : "4px",
+          height: isHovered ? "5px" : "4px",
+          opacity: isHovered ? 0.9 : 1,
         }}
       />
-      
     </div>
   );
 }
