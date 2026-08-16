@@ -1,13 +1,15 @@
 import { Instrument_Sans, Mr_Bedfort } from "next/font/google";
 import "./globals.css";
-import { GoogleAnalytics } from '@next/third-parties/google';
+import { GoogleAnalytics } from "@next/third-parties/google";
 
+// Primary body font
 const sansFont = Instrument_Sans({
   subsets: ["latin"],
   weight: ["400", "500"],
   variable: "--font-sans",
 });
 
+// Expressive script font for signature branding
 const expressiveScript = Mr_Bedfort({
   subsets: ["latin"],
   weight: ["400"],
@@ -47,7 +49,7 @@ export const metadata = {
     type: "website",
     images: [
       {
-        url: "/og-image.jpg", // ...
+        url: "/proj-1.png",
         width: 1200,
         height: 630,
         alt: "'Tubosun Portfolio Preview",
@@ -60,7 +62,7 @@ export const metadata = {
     description:
       "Frontend developer crafting immersive digital experiences through motion, typography and creative coding.",
     creator: "@ola2bosun",
-    images: ["/og-image.jpg"], // ...
+    images: ["/proj-1.png"],
   },
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION_ID,

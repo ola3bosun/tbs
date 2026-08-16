@@ -126,9 +126,6 @@ export default function SpiralGallery({ scrollProxy, setActiveProject, inProject
     isHijacked.current = true;
     setFocusedIndex(index);
 
-    // Lock the DOM scrollbar so the user can't ruin the camera math
-    document.body.style.overflow = "hidden";
-
     // Fire the signal to the HTML Overlay layer
     setActiveProject(projects[index]);
 

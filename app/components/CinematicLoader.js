@@ -53,20 +53,36 @@ export default function CinematicLoader({ onComplete }) {
       if (rawProgress < 1) {
         requestAnimationFrame(updateCounter);
       } else {
-        const transitionDelay = ACTIVE_VARIANT === "decryption" ? 1000 : 150;
+        // Time to wait after 100% before starting the opening animation
+        const transitionDelay = ACTIVE_VARIANT === "decryption" ? 800 : 150;
         
-        // Phase 1 complete -> Trigger Outro Transition
-        setTimeout(() => setPhase(2), transitionDelay);
+        // Duration of the opening animation based on the chosen variant
+        const animationDurations = {
+          decryption: 1200,
+          classic: 900,
+          fluid: 1500,
+          zoom: 1200,
+          audio: 900,
+        };
+        const activeDuration = animationDurations[ACTIVE_VARIANT] || 1000;
 
-        // Tell page it's done so background loads behind it
-        setTimeout(() => {
-          if (onComplete) onComplete();
-        }, transitionDelay + 450);
+        // Phase 1 -> Phase 2: Start opening the loader doors/effects
+        const t1 = setTimeout(() => {
+          setPhase(2);
+        }, transitionDelay);
 
-        // Phase 3 -> Kill the DOM node entirely
-        setTimeout(() => {
+        // Phase 2 -> Phase 3: Wait for opening animation to fully complete, then finish
+        const t2 = setTimeout(() => {
           setPhase(3);
-        }, transitionDelay + (ACTIVE_VARIANT === "zoom" ? 1350 : 950));
+          if (onComplete) {
+            onComplete();
+          }
+        }, transitionDelay + activeDuration + 50);
+
+        return () => {
+          clearTimeout(t1);
+          clearTimeout(t2);
+        };
       }
     };
 

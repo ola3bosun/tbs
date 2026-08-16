@@ -73,7 +73,7 @@ export default function ProjectHelix() {
         style={{ perspective: "2000px" }}
       >
         <div className="absolute inset-8 border border-neutral-900 pointer-events-none z-0 flex justify-between p-4 font-mono text-[9px] text-neutral-600 uppercase">
-          <span>// SELECTED WORK</span>
+          <span>{"// SELECTED WORK"}</span>
           <span>SYS. ARCHIVE ACTIVE</span>
         </div>
 

@@ -2,12 +2,25 @@
 
 import { useState, useEffect, useRef } from "react";
 
-export default function SystemMatrix({ track = { isPlaying: false }, activeHover }) {
+// Maximum number of logs kept in memory to prevent memory buildup
+const MAX_LOG_HISTORY = 20;
+
+export default function SystemMatrix({
+  track = { isPlaying: false },
+  activeHover,
+}) {
   const [time, setTime] = useState("");
   const [logs, setLogs] = useState([]);
   const logContainerRef = useRef(null);
 
-  // 1. Live 24-hour clock for Ibadan time
+  // Helper function to append a log and keep the list bounded
+  const appendLog = (message) => {
+    const timestamp = new Date().toLocaleTimeString("en-US", { hour12: false });
+    const formatted = `[${timestamp}] ${message}`;
+    setLogs((prev) => [...prev, formatted].slice(-MAX_LOG_HISTORY));
+  };
+
+  // 1. Live 24-hour clock for Ibadan (Lagos timezone)
   useEffect(() => {
     const updateTime = () => {
       const options = {
@@ -19,55 +32,54 @@ export default function SystemMatrix({ track = { isPlaying: false }, activeHover
       };
       setTime(new Intl.DateTimeFormat("en-US", options).format(new Date()));
     };
+
     updateTime();
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // 2. Initialize the system startup logs once on mount
+  // 2. System boot sequence logs on component mount
   useEffect(() => {
     const startupSequence = [
       "Contacting dev_TBS...",
       "Establishing Spotify stream connection...",
     ];
 
-    startupSequence.forEach((msg, index) => {
-      setTimeout(() => {
-        const timestamp = new Date().toLocaleTimeString("en-US", {
-          hour12: false,
-        });
-        setLogs((prev) => [...prev, `[${timestamp}] ${msg}`]);
-      }, index * 400);
+    const timerIds = startupSequence.map((msg, index) => {
+      return setTimeout(() => {
+        appendLog(msg);
+      }, (index + 1) * 400);
     });
+
+    return () => {
+      timerIds.forEach((id) => clearTimeout(id));
+    };
   }, []);
 
-  // 3. Listen for Spotify track state changes to push stream telemetry
+  // 3. Log Spotify track state changes
   useEffect(() => {
-    const timestamp = new Date().toLocaleTimeString("en-US", { hour12: false });
-    if (track.isPlaying) {
-      setLogs((prev) => [
-        ...prev,
-        `[${timestamp}] Spotify API link: active // listening to "${track.title}"`,
-      ]);
-    } else if (logs.length > 4) {
-      setLogs((prev) => [
-        ...prev,
-        `[${timestamp}] Spotify signal lost // parsing static noise.`,
-      ]);
-    }
+    const timer = setTimeout(() => {
+      if (track.isPlaying) {
+        appendLog(`Spotify API link: active // listening to "${track.title}"`);
+      } else {
+        appendLog("Spotify signal lost // parsing static noise.");
+      }
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [track.isPlaying, track.title]);
 
-  // 4. Capture interactive hover events sent down from the main page layout
+  // 4. Log hover events from interactive navigation and links
   useEffect(() => {
     if (!activeHover) return;
-    const timestamp = new Date().toLocaleTimeString("en-US", { hour12: false });
-    setLogs((prev) => [
-      ...prev,
-      `[${timestamp}] Event trigger // ${activeHover}`,
-    ]);
+    const timer = setTimeout(() => {
+      appendLog(`Event trigger // ${activeHover}`);
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [activeHover]);
 
-  // 5. Automatically keep the log view pinned to the bottom as new streams come in
+  // 5. Keep the log display pinned to the latest message
   useEffect(() => {
     if (logContainerRef.current) {
       logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
@@ -76,7 +88,7 @@ export default function SystemMatrix({ track = { isPlaying: false }, activeHover
 
   return (
     <div className="flex flex-col space-y-4 md:space-y-6 font-mono text-[10px] text-neutral-500 tracking-wider uppercase md:h-[220px] justify-between pt-2">
-      {/* Structural Static Meta Information */}
+      {/* Location and time metadata */}
       <div className="space-y-4">
         <div className="space-y-1">
           <span className="text-neutral-600">{"// Location"}</span>
@@ -90,7 +102,7 @@ export default function SystemMatrix({ track = { isPlaying: false }, activeHover
         </div>
       </div>
 
-      {/* Dynamic Streaming Console Log */}
+      {/* Live streaming activity log window */}
       <div className="hidden md:flex space-y-2 flex-1 flex-col min-h-0 justify-end">
         <span className="text-neutral-600 block border-b border-neutral-900 pb-1">
           {"// Activity Log"}

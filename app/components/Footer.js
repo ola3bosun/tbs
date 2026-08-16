@@ -74,13 +74,13 @@ export default function Footer({ isLoading, setIsHovered, setActiveHover }) {
   // SPOTIFY ANIMATION LOGIC
   useEffect(() => {
     if (initialMount.current) {
-      setDisplayTrack(track);
       initialMount.current = false;
-      return;
+      const frame = requestAnimationFrame(() => setDisplayTrack(track));
+      return () => cancelAnimationFrame(frame);
     }
 
     if (track.title !== displayTrack.title) {
-      setSongAnimState("exit");
+      const startTimer = setTimeout(() => setSongAnimState("exit"), 0);
       const timeout = setTimeout(() => {
         setDisplayTrack(track);
         setSongAnimState("enter");
@@ -88,9 +88,13 @@ export default function Footer({ isLoading, setIsHovered, setActiveHover }) {
           setSongAnimState("active");
         });
       }, 400);
-      return () => clearTimeout(timeout);
+      return () => {
+        clearTimeout(startTimer);
+        clearTimeout(timeout);
+      };
     } else {
-      setDisplayTrack(track);
+      const frame = requestAnimationFrame(() => setDisplayTrack(track));
+      return () => cancelAnimationFrame(frame);
     }
   }, [track, displayTrack.title]);
 
