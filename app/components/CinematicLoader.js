@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { useProgress } from "@react-three/drei";
 
 // ==========================================
 // CHANGE THIS TO PREVIEW DIFFERENT LOADERS:
@@ -9,19 +10,48 @@ import { useEffect, useState, useRef } from "react";
 const ACTIVE_VARIANT = "decryption";
 
 const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*!?/[]{}~^";
+const TARGET_NAME = "OLATUBOSUN DIYAOLU";
+const INITIAL_SCRAMBLE = "X#9K@7M$2P !8Q&4Z%";
 
-export default function CinematicLoader({ onComplete }) {
+export default function CinematicLoader({ onRevealStart, onComplete }) {
+  const { active: webglLoading, progress: webglProgress, total } = useProgress();
   const [progress, setProgress] = useState(0);
   const [phase, setPhase] = useState(1); // 1: Counting, 2: Transitioning, 3: Done
-  const [scrambledText, setScrambledText] = useState("");
-  
+  const [scrambledText, setScrambledText] = useState(INITIAL_SCRAMBLE);
+
+  // Refs to read live asset readiness inside the RAF loop without restarting it
+  const webglReadyRef = useRef(false);
+  const webglProgressRef = useRef(0);
+  const callbacksRef = useRef({ onRevealStart, onComplete });
+
+  useEffect(() => {
+    callbacksRef.current = { onRevealStart, onComplete };
+  }, [onRevealStart, onComplete]);
+
+  useEffect(() => {
+    webglProgressRef.current = webglProgress;
+    // Mark WebGL ready once drei's DefaultLoadingManager finishes or when all tracked items complete
+    if (!webglLoading && (total > 0 ? webglProgress >= 100 : true)) {
+      webglReadyRef.current = true;
+    }
+  }, [webglLoading, webglProgress, total]);
+
   // Audio variant specific state
-  const [bars, setBars] = useState([20, 50, 80, 40, 60]); 
+  const [bars, setBars] = useState([20, 50, 80, 40, 60]);
   const audioRafRef = useRef(null);
 
   useEffect(() => {
-    const duration = 1800;
+    const prefersReducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const minDuration = prefersReducedMotion ? 400 : 1800;
+    const maxWaitFallback = 4500;
     const startTime = performance.now();
+    let lastScrambleTick = 0;
+    let rafId = null;
+    let t1 = null;
+    let t2 = null;
 
     const easeOutExpo = (x) => {
       return x === 1 ? 1 : 1 - Math.pow(2, -10 * x);
@@ -29,70 +59,97 @@ export default function CinematicLoader({ onComplete }) {
 
     const updateCounter = (currentTime) => {
       const elapsed = currentTime - startTime;
-      const rawProgress = Math.min(elapsed / duration, 1);
-      const easedProgress = easeOutExpo(rawProgress);
-      const currentVal = Math.floor(easedProgress * 100);
+      const timeProgress = Math.min(elapsed / minDuration, 1);
+      const easedTime = easeOutExpo(timeProgress);
+
+      // Blend minimum cinematic timer with real Three.js texture/environment progress
+      const assetFactor = webglReadyRef.current
+        ? 1
+        : Math.max(webglProgressRef.current / 100, timeProgress * 0.92);
+      const blendedProgress =
+        elapsed > maxWaitFallback ? 1 : Math.min(easedTime, assetFactor);
+
+      const isComplete =
+        (timeProgress >= 1 && webglReadyRef.current) ||
+        elapsed > maxWaitFallback;
+
+      const currentVal = isComplete
+        ? 100
+        : Math.min(99, Math.floor(blendedProgress * 100));
 
       setProgress(currentVal);
 
-      // Decryption Logic
+      // Throttled Decryption Logic (~45ms cadence for tactile mechanical glyph locking)
       if (ACTIVE_VARIANT === "decryption") {
-        const target = "OLATUBOSUN DIYAOLU";
-        const lockedCount = Math.floor(rawProgress * target.length);
-        const scrambled = target
-          .split("")
-          .map((char, i) => {
-            if (char === " ") return " ";
-            if (i < lockedCount) return char;
-            return CHARS[Math.floor(Math.random() * CHARS.length)];
-          })
-          .join("");
-        setScrambledText(scrambled);
+        if (isComplete) {
+          setScrambledText(TARGET_NAME);
+        } else if (currentTime - lastScrambleTick >= 45) {
+          lastScrambleTick = currentTime;
+          const lockedCount = Math.floor(blendedProgress * TARGET_NAME.length);
+          const scrambled = TARGET_NAME.split("")
+            .map((char, i) => {
+              if (char === " ") return " ";
+              if (i < lockedCount) return char;
+              return CHARS[Math.floor(Math.random() * CHARS.length)];
+            })
+            .join("");
+          setScrambledText(scrambled);
+        }
       }
 
-      if (rawProgress < 1) {
-        requestAnimationFrame(updateCounter);
+      if (!isComplete) {
+        rafId = requestAnimationFrame(updateCounter);
       } else {
-        // Time to wait after 100% before starting the opening animation
-        const transitionDelay = ACTIVE_VARIANT === "decryption" ? 800 : 150;
-        
+        // Time to hold at 100% / locked cipher before parting the blast doors
+        const transitionDelay = prefersReducedMotion
+          ? 100
+          : ACTIVE_VARIANT === "decryption"
+          ? 550
+          : 150;
+
         // Duration of the opening animation based on the chosen variant
         const animationDurations = {
-          decryption: 1200,
+          decryption: 1150,
           classic: 900,
           fluid: 1500,
           zoom: 1200,
           audio: 900,
         };
-        const activeDuration = animationDurations[ACTIVE_VARIANT] || 1000;
+        const activeDuration = prefersReducedMotion
+          ? 300
+          : animationDurations[ACTIVE_VARIANT] || 1000;
 
-        // Phase 1 -> Phase 2: Start opening the loader doors/effects
-        const t1 = setTimeout(() => {
+        // Phase 1 -> Phase 2: Part the loader doors and trigger Act II scene choreography
+        t1 = setTimeout(() => {
           setPhase(2);
+          if (callbacksRef.current.onRevealStart) {
+            callbacksRef.current.onRevealStart();
+          }
         }, transitionDelay);
 
-        // Phase 2 -> Phase 3: Wait for opening animation to fully complete, then finish
-        const t2 = setTimeout(() => {
+        // Phase 2 -> Phase 3: Unmount once shutters finish parting
+        t2 = setTimeout(() => {
           setPhase(3);
-          if (onComplete) {
-            onComplete();
+          if (callbacksRef.current.onComplete) {
+            callbacksRef.current.onComplete();
           }
         }, transitionDelay + activeDuration + 50);
-
-        return () => {
-          clearTimeout(t1);
-          clearTimeout(t2);
-        };
       }
     };
 
-    requestAnimationFrame(updateCounter);
-  }, [onComplete]);
+    rafId = requestAnimationFrame(updateCounter);
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      if (t1) clearTimeout(t1);
+      if (t2) clearTimeout(t2);
+    };
+  }, []);
 
   // Audio bars randomizer
   useEffect(() => {
     if (ACTIVE_VARIANT !== "audio") return;
-    
+
     const animateBars = () => {
       if (phase === 1) {
         setBars([
@@ -102,34 +159,44 @@ export default function CinematicLoader({ onComplete }) {
           Math.random() * 80 + 20,
           Math.random() * 80 + 20,
         ]);
-        audioRafRef.current = setTimeout(() => requestAnimationFrame(animateBars), 100);
+        audioRafRef.current = setTimeout(
+          () => requestAnimationFrame(animateBars),
+          100
+        );
       }
     };
-    
+
     animateBars();
     return () => clearTimeout(audioRafRef.current);
   }, [phase]);
 
-
   if (phase === 3) return null;
+
+  // Block pointer interactions during Phase 1 so users don't drag the hidden 3D scene
+  const pointerClass =
+    phase === 1 ? "pointer-events-auto" : "pointer-events-none";
 
   // -------------------------------------------------------------
   // VARIANT 1: CLASSIC BLAST DOORS
   // -------------------------------------------------------------
   if (ACTIVE_VARIANT === "classic") {
     return (
-      <div className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center font-mono overflow-hidden">
+      <div
+        className={`fixed inset-0 z-50 ${pointerClass} flex items-center justify-center font-mono overflow-hidden`}
+      >
         <div
-          className="absolute top-0 left-0 w-full bg-[#0a0a0a] will-change-[height] transition-all duration-[900ms]"
+          className="absolute top-0 left-0 w-full h-[50vh] bg-[#0a0a0a] will-change-transform transition-transform duration-[900ms]"
           style={{
-            height: phase === 1 ? "50vh" : "0vh",
+            transform:
+              phase === 1 ? "translate3d(0, 0%, 0)" : "translate3d(0, -100%, 0)",
             transitionTimingFunction: "cubic-bezier(0.85, 0, 0.15, 1)",
           }}
         />
         <div
-          className="absolute bottom-0 left-0 w-full bg-[#0a0a0a] will-change-[height] transition-all duration-[900ms]"
+          className="absolute bottom-0 left-0 w-full h-[50vh] bg-[#0a0a0a] will-change-transform transition-transform duration-[900ms]"
           style={{
-            height: phase === 1 ? "50vh" : "0vh",
+            transform:
+              phase === 1 ? "translate3d(0, 0%, 0)" : "translate3d(0, 100%, 0)",
             transitionTimingFunction: "cubic-bezier(0.85, 0, 0.15, 1)",
           }}
         />
@@ -137,7 +204,9 @@ export default function CinematicLoader({ onComplete }) {
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center transition-all duration-300"
           style={{
             opacity: phase === 1 ? 1 : 0,
-            transform: `translate(-50%, -50%) scale(${1 + (progress / 100) * 0.05})`,
+            transform: `translate(-50%, -50%) scale(${
+              1 + (progress / 100) * 0.05
+            })`,
           }}
         >
           <div className="flex items-center gap-2 sm:gap-3 text-[#f4efe9]">
@@ -156,15 +225,17 @@ export default function CinematicLoader({ onComplete }) {
   // -------------------------------------------------------------
   if (ACTIVE_VARIANT === "fluid") {
     return (
-      <div className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center font-mono overflow-hidden">
-        <div 
+      <div
+        className={`fixed inset-0 z-50 ${pointerClass} flex items-center justify-center font-mono overflow-hidden`}
+      >
+        <div
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-[#0a0a0a] transition-all duration-[1500ms]"
           style={{
-            borderStyle: 'solid',
-            borderWidth: '150vmax',
-            width: phase === 1 ? '0vmax' : '350vmax',
-            height: phase === 1 ? '0vmax' : '350vmax',
-            transitionTimingFunction: "cubic-bezier(0.85, 0, 0.15, 1)"
+            borderStyle: "solid",
+            borderWidth: "150vmax",
+            width: phase === 1 ? "0vmax" : "350vmax",
+            height: phase === 1 ? "0vmax" : "350vmax",
+            transitionTimingFunction: "cubic-bezier(0.85, 0, 0.15, 1)",
           }}
         />
         <div
@@ -187,17 +258,19 @@ export default function CinematicLoader({ onComplete }) {
   // -------------------------------------------------------------
   if (ACTIVE_VARIANT === "zoom") {
     return (
-      <div className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center font-mono overflow-hidden bg-transparent">
+      <div
+        className={`fixed inset-0 z-50 ${pointerClass} flex items-center justify-center font-mono overflow-hidden bg-transparent`}
+      >
         {/* Background that fades out */}
-        <div 
-          className="absolute inset-0 bg-[#0a0a0a] transition-opacity duration-700" 
+        <div
+          className="absolute inset-0 bg-[#0a0a0a] transition-opacity duration-700"
           style={{ opacity: phase === 1 ? 1 : 0 }}
         />
         <div
-          className="relative transition-all duration-[1200ms] flex items-center justify-center text-[#ecdfcc]"
+          className="relative transition-all duration-[1200ms] flex items-center justify-center text-[#ecdfcc] will-change-transform"
           style={{
-            transform: phase === 1 ? 'scale(1)' : 'scale(150)',
-            opacity: phase === 1 ? 1 : 0, // Fades out completely as it swallows the camera
+            transform: phase === 1 ? "scale(1)" : "scale(150)",
+            opacity: phase === 1 ? 1 : 0,
             transitionTimingFunction: "cubic-bezier(0.85, 0, 0.15, 1)",
           }}
         >
@@ -222,27 +295,50 @@ export default function CinematicLoader({ onComplete }) {
   // -------------------------------------------------------------
   if (ACTIVE_VARIANT === "decryption") {
     return (
-      <div className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center font-mono overflow-hidden">
+      <div
+        className={`fixed inset-0 z-50 ${pointerClass} flex items-center justify-center font-mono overflow-hidden`}
+      >
+        {/* Top GPU-composited blast door */}
         <div
-          className="absolute top-0 left-0 w-full bg-[#0a0a0a] transition-all duration-[1200ms]"
+          className="absolute top-0 left-0 w-full h-[50vh] bg-[#0a0a0a] border-b border-white/[0.06] will-change-transform transition-transform duration-[1150ms]"
           style={{
-            height: phase === 1 ? "50vh" : "0vh",
-            transitionTimingFunction: "cubic-bezier(0.25, 1, 0.5, 1)",
+            transform:
+              phase === 1 ? "translate3d(0, 0%, 0)" : "translate3d(0, -100%, 0)",
+            transitionTimingFunction: "cubic-bezier(0.85, 0, 0.15, 1)",
+          }}
+        />
+        {/* Bottom GPU-composited blast door */}
+        <div
+          className="absolute bottom-0 left-0 w-full h-[50vh] bg-[#0a0a0a] border-t border-white/[0.06] will-change-transform transition-transform duration-[1150ms]"
+          style={{
+            transform:
+              phase === 1 ? "translate3d(0, 0%, 0)" : "translate3d(0, 100%, 0)",
+            transitionTimingFunction: "cubic-bezier(0.85, 0, 0.15, 1)",
+          }}
+        />
+        {/* Horizon progress hairline */}
+        <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[1px] bg-[#ecdfcc]/25 transition-opacity duration-300"
+          style={{
+            width: `${progress}%`,
+            opacity: phase === 1 ? 1 : 0,
           }}
         />
         <div
-          className="absolute bottom-0 left-0 w-full bg-[#0a0a0a] transition-all duration-[1200ms]"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-2.5 bg-[#0a0a0a] px-4 py-1 transition-all duration-300"
           style={{
-            height: phase === 1 ? "50vh" : "0vh",
-            transitionTimingFunction: "cubic-bezier(0.25, 1, 0.5, 1)",
+            opacity: phase === 1 ? 1 : 0,
+            transform:
+              phase === 1
+                ? "translate3d(0, 0, 0) scale(1)"
+                : "translate3d(0, 0, 0) scale(0.96)",
           }}
-        />
-        <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center transition-all duration-300"
-          style={{ opacity: phase === 1 ? 1 : 0 }}
         >
           <span className="text-[12px] sm:text-sm tracking-[0.25em] sm:tracking-[0.4em] text-[#ecdfcc] font-mono whitespace-nowrap">
             [{scrambledText}]
+          </span>
+          <span className="text-[9px] tracking-[0.35em] text-neutral-500 uppercase">
+            SYS.INIT // {progress.toString().padStart(3, "0")}%
           </span>
         </div>
       </div>
@@ -254,18 +350,22 @@ export default function CinematicLoader({ onComplete }) {
   // -------------------------------------------------------------
   if (ACTIVE_VARIANT === "audio") {
     return (
-      <div className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center font-mono overflow-hidden">
+      <div
+        className={`fixed inset-0 z-50 ${pointerClass} flex items-center justify-center font-mono overflow-hidden`}
+      >
         <div
-          className="absolute top-0 left-0 w-full bg-[#0a0a0a] transition-all duration-[900ms]"
+          className="absolute top-0 left-0 w-full h-[50vh] bg-[#0a0a0a] will-change-transform transition-transform duration-[900ms]"
           style={{
-            height: phase === 1 ? "50vh" : "0vh",
+            transform:
+              phase === 1 ? "translate3d(0, 0%, 0)" : "translate3d(0, -100%, 0)",
             transitionTimingFunction: "cubic-bezier(0.85, 0, 0.15, 1)",
           }}
         />
         <div
-          className="absolute bottom-0 left-0 w-full bg-[#0a0a0a] transition-all duration-[900ms]"
+          className="absolute bottom-0 left-0 w-full h-[50vh] bg-[#0a0a0a] will-change-transform transition-transform duration-[900ms]"
           style={{
-            height: phase === 1 ? "50vh" : "0vh",
+            transform:
+              phase === 1 ? "translate3d(0, 0%, 0)" : "translate3d(0, 100%, 0)",
             transitionTimingFunction: "cubic-bezier(0.85, 0, 0.15, 1)",
           }}
         />
@@ -275,10 +375,10 @@ export default function CinematicLoader({ onComplete }) {
         >
           <div className="flex items-end gap-1 mb-2 h-6">
             {bars.map((height, i) => (
-              <div 
+              <div
                 key={i}
                 className="w-1 bg-[#ecdfcc] transition-all duration-100 ease-linear"
-                style={{ height: phase === 1 ? `${height}%` : '2px' }}
+                style={{ height: phase === 1 ? `${height}%` : "2px" }}
               />
             ))}
           </div>
@@ -292,3 +392,4 @@ export default function CinematicLoader({ onComplete }) {
 
   return null;
 }
+
