@@ -13,6 +13,7 @@ import RollingText from "./components/RollingText";
 import { projects } from "./data/projects";
 
 export default function Home() {
+  const [loaderRevealing, setLoaderRevealing] = useState(false);
   const [loaderFinished, setLoaderFinished] = useState(false);
   const [activeHover, setActiveHover] = useState(null);
   const [track, setTrack] = useState({ isPlaying: false });
@@ -106,7 +107,10 @@ export default function Home() {
 
       {/* Cinematic boot loader */}
       {!loaderFinished && (
-        <CinematicLoader onComplete={() => setLoaderFinished(true)} />
+        <CinematicLoader
+          onRevealStart={() => setLoaderRevealing(true)}
+          onComplete={() => setLoaderFinished(true)}
+        />
       )}
 
       {/* Case study detail modal with scroll navigation between projects */}
@@ -131,7 +135,15 @@ export default function Home() {
         className="fixed bottom-[-3vw] left-0 w-full z-0 flex justify-center items-end pointer-events-none overflow-hidden"
         aria-hidden="true"
       >
-        <div className="translate-y-[15%] flex items-center justify-center">
+        <div
+          className="flex items-center justify-center transition-all duration-[1400ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
+          style={{
+            transform: loaderRevealing
+              ? "translate3d(0, 15%, 0)"
+              : "translate3d(0, 48%, 0)",
+            opacity: loaderRevealing ? 1 : 0,
+          }}
+        >
           <div
             ref={bgTextRef}
             className="text-[26vw] sm:text-[23vw] font-medium tracking-tight lowercase leading-[0.6] font-sans text-[#393E46] whitespace-nowrap opacity-50 select-none flex items-center justify-center will-change-transform"
@@ -171,17 +183,25 @@ export default function Home() {
           }}
           inProjectView={inProjectView}
           groupOffsetX={isMobile ? 0 : 2.8}
+          isRevealed={loaderRevealing}
         />
       </section>
 
       {/* Foreground HUD interface */}
       <div
         className={`fixed inset-0 pointer-events-none z-20 p-6 sm:p-12 transition-opacity duration-700 ease-in-out ${
-          inProjectView ? "opacity-0" : "opacity-100"
+          inProjectView || !loaderRevealing ? "opacity-0" : "opacity-100"
         }`}
       >
         {/* Top left header, navigation, and system status matrix */}
-        <div className="absolute top-6 left-6 sm:top-12 sm:left-12 pointer-events-auto flex flex-col gap-5">
+        <div
+          className="absolute top-6 left-6 sm:top-12 sm:left-12 pointer-events-auto flex flex-col gap-5 transition-transform duration-[1100ms] delay-150 ease-[cubic-bezier(0.16,1,0.3,1)]"
+          style={{
+            transform: loaderRevealing
+              ? "translate3d(0, 0, 0)"
+              : "translate3d(0, 14px, 0)",
+          }}
+        >
           <nav className="space-y-3" aria-label="Social links">
             <span className="block text-[9px] uppercase tracking-widest text-neutral-500 font-mono">
               {"// SOCIALS"}
@@ -248,7 +268,14 @@ export default function Home() {
         </div>
 
         {/* Top center Spotify live music status with magnetic pull */}
-        <div className="absolute top-6 sm:top-12 left-1/2 -translate-x-1/2 pointer-events-auto">
+        <div
+          className="absolute top-6 sm:top-12 left-1/2 -translate-x-1/2 pointer-events-auto transition-transform duration-[1100ms] delay-200 ease-[cubic-bezier(0.16,1,0.3,1)]"
+          style={{
+            transform: loaderRevealing
+              ? "translate3d(0, 0, 0)"
+              : "translate3d(0, -14px, 0)",
+          }}
+        >
           <Magnetic strength={0.25} radius={60}>
             <SpotifyWidget track={track} />
           </Magnetic>
