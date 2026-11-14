@@ -10,6 +10,7 @@ export default function FloatingScene({
   setActiveProject,
   inProjectView,
   groupOffsetX = 0,
+  isRevealed = false,
 }) {
   return (
     <div className="fixed inset-0 w-full h-screen z-10 pointer-events-auto">
@@ -28,6 +29,7 @@ export default function FloatingScene({
             setActiveProject={setActiveProject}
             inProjectView={inProjectView}
             groupOffsetX={groupOffsetX}
+            isRevealed={isRevealed}
           />
         </Suspense>
 
