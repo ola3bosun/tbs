@@ -32,10 +32,12 @@ export default function FloatingGallery({
   activeProject,
   setActiveProject,
   inProjectView,
+  isRevealed = false,
 }) {
   const groupRef = useRef();
   const meshesRef = useRef([]);
   const materialsRef = useRef([]);
+  const entryProgressRef = useRef(0);
 
   // Preload project textures for instantaneous transitions in full-screen mode
   const preloadedTextures = useTexture([
@@ -155,6 +157,18 @@ export default function FloatingGallery({
   useFrame((state, delta) => {
     const time = state.clock.elapsedTime;
 
+    // Choreographed Act II reveal progression (0 -> 1 as blast doors part)
+    const targetEntry = isRevealed ? 1.0 : 0.0;
+    entryProgressRef.current = THREE.MathUtils.lerp(
+      entryProgressRef.current,
+      targetEntry,
+      1 - Math.exp(-3.2 * delta)
+    );
+    const entry = entryProgressRef.current;
+    const entrySpinOffset = (1 - entry) * Math.PI * 0.65;
+    const activeRadius = RING_RADIUS * (0.55 + 0.45 * entry);
+    const entryYOffset = (1 - entry) * -0.55;
+
     // Apply drag inertia decay when not actively dragging
     if (!isDraggingRef.current) {
       dragAngleRef.current += dragVelocityRef.current;
@@ -164,7 +178,7 @@ export default function FloatingGallery({
     const drag = dragAngleRef.current;
 
     // Smooth instantaneous drag speed for chromatic aberration
-    const currentSpeed = Math.abs(dragVelocityRef.current);
+    const currentSpeed = Math.abs(dragVelocityRef.current) + (1 - entry) * 0.04;
     smoothVelocityRef.current = THREE.MathUtils.lerp(
       smoothVelocityRef.current,
       currentSpeed,
@@ -184,11 +198,11 @@ export default function FloatingGallery({
 
       // ── Continuous smooth wave positioning in carousel ─────────────────────
       const autoSpin = inProjectView ? 0 : time * 0.05;
-      const theta = item.baseTheta + autoSpin + drag;
+      const theta = item.baseTheta + autoSpin + drag + entrySpinOffset;
 
       // Calculate circular ring coordinates (X and Z)
-      const rx = Math.sin(theta) * RING_RADIUS;
-      const rz = Math.cos(theta) * RING_RADIUS;
+      const rx = Math.sin(theta) * activeRadius;
+      const rz = Math.cos(theta) * activeRadius;
 
       // Smooth continuous vertical wave based on angle
       const waveY = Math.sin(theta) * 0.35;
@@ -196,7 +210,7 @@ export default function FloatingGallery({
         Math.sin(time * item.floatSpeed + item.floatOffset) * 0.08;
 
       const baseX = rx;
-      const baseY = waveY + floatAmt;
+      const baseY = waveY + floatAmt + entryYOffset;
       const baseZ = rz;
 
       // ── Card rotation: face outwards from cylinder center ──────────────────
@@ -207,8 +221,8 @@ export default function FloatingGallery({
 
       // ── State overrides for active / hovered / normal states ───────────────
       _targetPos.set(baseX, baseY, baseZ);
-      let targetScale = 1.0;
-      let targetOpacity = 0.85;
+      let targetScale = 0.86 + 0.14 * entry;
+      let targetOpacity = 0.85 * entry;
       let targetCurve = 0.55;
 
       if (isActiveMesh) {
